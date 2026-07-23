@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(pbcopy)",
+      "Bash(clip.exe)",
+      "Bash(xclip -selection clipboard)",
+      "Bash(set -e)",
+      "Bash(rm -rf .bootstrap-scaffold/.git)",
+      "Bash(mv .bootstrap-scaffold/.husky .)",
+      "Bash(mv .bootstrap-scaffold/.vscode .)"
+    ]
+  }
+}
