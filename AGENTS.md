@@ -21,6 +21,7 @@ Prisoner's Dilemma Tournament — an Astro 6 SSR app with React 19 islands, Tail
 - `npm run build` — production build; `npm run preview` — preview it
 - `npm run lint` / `npm run lint:fix` — ESLint with type-checked rules
 - `npm run format` — Prettier (astro + tailwind plugins)
+- `npm run deploy` — `wrangler deploy` to Cloudflare Workers (worker name: `prisoners-dilemma-tournament`)
 - `npx supabase start` — local Supabase (requires Docker); `npx supabase stop` to end it
 
 No test runner is configured in this project yet.
@@ -31,7 +32,7 @@ TypeScript strict mode (`astro/tsconfigs/strict`); path alias `@/*` → `./src/*
 
 ## CI Gate
 
-`@.github/workflows/ci.yml` runs on push/PR to `master`: `npx astro sync`, `npm run lint`, `npm run build`. The build step requires `SUPABASE_URL` and `SUPABASE_KEY` as GitHub repository secrets.
+`@.github/workflows/ci.yml` runs on push/PR to `master`: `npx astro sync`, `npm run lint`, `npm run build`. The build step requires `SUPABASE_URL` and `SUPABASE_KEY` as GitHub repository secrets. On `push` to `master` only, a second `deploy` job also runs `wrangler deploy` via `cloudflare/wrangler-action@v3`, using the `CLOUDFLARE_API_TOKEN` repository secret and syncing `SUPABASE_URL`/`SUPABASE_KEY` as Workers Secrets on every deploy.
 
 ## Security & Configuration
 
