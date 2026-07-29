@@ -20,7 +20,7 @@ export type Database = {
           id: string
           player_a_id: string
           player_b_id: string
-          status: Database["public"]["Enums"]["match_status"]
+          status: string
           tournament_id: string
         }
         Insert: {
@@ -28,7 +28,7 @@ export type Database = {
           id?: string
           player_a_id: string
           player_b_id: string
-          status?: Database["public"]["Enums"]["match_status"]
+          status?: string
           tournament_id: string
         }
         Update: {
@@ -36,7 +36,7 @@ export type Database = {
           id?: string
           player_a_id?: string
           player_b_id?: string
-          status?: Database["public"]["Enums"]["match_status"]
+          status?: string
           tournament_id?: string
         }
         Relationships: [
@@ -110,7 +110,6 @@ export type Database = {
       join_tournament: { Args: { p_join_code: string }; Returns: string }
     }
     Enums: {
-      match_status: "pending" | "in_progress" | "finished"
       tournament_status: "lobby" | "started" | "finished"
     }
     CompositeTypes: {
@@ -239,7 +238,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      match_status: ["pending", "in_progress", "finished"],
       tournament_status: ["lobby", "started", "finished"],
     },
   },

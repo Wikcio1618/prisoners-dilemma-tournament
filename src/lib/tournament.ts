@@ -9,9 +9,11 @@
 /**
  * Maximum players in a single tournament.
  *
- * Must stay in sync with the literal in `public.join_tournament()`
- * (`supabase/migrations/20260729174939_tournament_rls.sql`), which enforces the cap
- * under a row lock. Changing one without the other lets the two disagree silently.
+ * Must stay in sync with the literal in `public.join_tournament()`, which enforces the
+ * cap under a row lock. The live definition is the most recent migration that replaces
+ * that function — currently
+ * `supabase/migrations/20260729192744_join_tournament_membership_shortcircuit.sql`.
+ * Changing one without the other lets the two disagree silently.
  */
 export const MAX_PLAYERS_PER_TOURNAMENT = 50;
 
@@ -23,6 +25,20 @@ export const MAX_ROUNDS_PER_MATCH = 20;
 
 /** Round count applied when the creator does not choose one. */
 export const DEFAULT_ROUNDS_PER_MATCH = 10;
+
+/**
+ * Format floor for a tournament's join code.
+ *
+ * Unlike the round bounds above, this one *is* enforced in the database — the join code
+ * is the sole credential for entering a tournament, so the constraint lives where it
+ * cannot be bypassed. Mirrored by `tournaments_join_code_format`
+ * (`supabase/migrations/20260729193142_join_code_format_and_match_player_indexes.sql`);
+ * a code failing this pattern is rejected by the insert, not by this constant.
+ */
+export const JOIN_CODE_PATTERN = /^[A-Z0-9]{8,}$/;
+
+/** Length used when generating a new join code. The database enforces only the minimum. */
+export const JOIN_CODE_LENGTH = 8;
 
 /**
  * Why a `join_tournament` call was rejected.

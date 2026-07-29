@@ -306,6 +306,32 @@ Both migrations are additive; rollback is a matching `DROP` migration rather tha
 - Existing API route pattern: `src/pages/api/auth/signin.ts`
 - Project conventions: `AGENTS.md` — migration naming, row-level-security mandate, `src/lib/` placement
 
+## Addendum — post-plan changes (2026-07-29)
+
+Work that landed after the plan was closed out. The Progress section below covers only the four planned phases and is left as the historical record; these changes have no rows there.
+
+**Deviations made during implementation:**
+
+1. **`matches.status` type.** The plan named the column without a type. Implemented first as a `public.match_status` enum, then converted (review F7) to `text` with a `matches_status_check` constraint holding the same values (`pending | in_progress | finished`). Provisional — S-02 owns match semantics, and a constraint swap is far cheaper than recreating an enum type.
+2. **`tournaments` UPDATE policy `WITH CHECK`.** The plan specified only `USING`. Postgres reuses `USING` as `WITH CHECK` when the latter is absent, which would have rejected every `lobby → started` update — the sole purpose of the policy. An explicit `WITH CHECK` was added.
+3. **ESLint ignore for generated types.** Committing `gen types` output verbatim produced 118 lint errors. `eslint.config.js` now ignores `src/db/database.types.ts`; `.prettierignore` does the same for the formatter.
+
+**Follow-up migrations (beyond the two the Desired End State describes):**
+
+| Migration | Why |
+| --- | --- |
+| `20260729190621_join_tournament_error_codes.sql` | Failure reasons carried as stable tokens in the error `DETAIL`; `already started` and `full` previously shared `P0001`, leaving English message text as the only discriminator. Custom SQLSTATEs were rejected because PostgREST maps unrecognised codes to HTTP 500. |
+| `20260729192557_tighten_tournament_update_policy.sql` | Review F1. `WITH CHECK` now requires `status = 'started'`. Previously a creator could set `lobby → finished`, producing a row that satisfied no `USING` clause on update or delete — permanently frozen. |
+| `20260729192744_join_tournament_membership_shortcircuit.sql` | Review F2. Membership is resolved before the lobby and capacity gates, restoring the idempotency this section promised. |
+| `20260729193142_join_code_format_and_match_player_indexes.sql` | Review F5/F6. Format floor on `join_code` (it is the sole entry credential), plus the two missing FK indexes on `matches`. |
+| `20260729193532_match_status_text_check.sql` | Review F7. `matches.status` converted from an enum to `text` + check constraint so S-02 can redefine the vocabulary cheaply. |
+
+**Known constraints carried forward:**
+
+- **`status = 'finished'` is unreachable through the policy layer by design.** The UPDATE policy's `USING` requires `lobby`, so only `lobby → started` is possible. Concluding a tournament needs server-side statistics computation, so it belongs in a `SECURITY DEFINER` function that a later slice adds — following the `join_tournament` precedent.
+- **`matches.player_a_id` / `player_b_id` cascade on user deletion.** A participant deleting their account silently removes their match rows from a *finished* tournament, changing other players' standings retroactively. Deferred to S-04, which owns statistics and therefore the retention decision (restrict, tombstone, or anonymise).
+- **Two DB↔TS invariant pairs held together only by comments**: the `50` player cap, and the `JOIN_CODE_PATTERN` regex.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

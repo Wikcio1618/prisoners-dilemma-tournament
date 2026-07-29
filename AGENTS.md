@@ -8,12 +8,14 @@ Prisoner's Dilemma Tournament — an Astro 6 SSR app with React 19 islands, Tail
 - Use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names — never concatenate class strings manually.
 - Astro components for static content/layout; React components only when interactivity is needed. No Next.js directives (`"use client"`, etc.) — extract hooks to `src/components/hooks/`.
 - API route handlers use uppercase `GET`/`POST` exports and validate input with zod.
-- Supabase migrations live in `supabase/migrations/`, named `YYYYMMDDHHmmss_short_description.sql`; always enable RLS with granular per-operation, per-role policies on new tables.
+- Supabase migrations live in `supabase/migrations/`, named `YYYYMMDDHHmmss_short_description.sql`; always enable RLS with granular per-operation, per-role policies on new tables. Create them with `npx supabase migration new <name>` and apply with `npx supabase db push --linked` (no Docker required); **after every applied migration, regenerate types** with `npx supabase gen types typescript --linked --schema public > src/db/database.types.ts` and commit the result.
+- RLS helper functions that policies call must be `SECURITY DEFINER ... SET search_path = ''` and live in the non-exposed `private` schema — never `public`, which is API-reachable. Schema-qualify every relation inside them, and grant both `USAGE ON SCHEMA private` and `EXECUTE ON FUNCTION` to `authenticated`, since policy expressions run with the querying user's privileges.
+- An RLS `UPDATE` policy with no `WITH CHECK` reuses its `USING` expression as the check, which silently forbids the very transition the policy exists to allow. Write `WITH CHECK` explicitly whenever the update changes a column that `USING` constrains.
 - Route protection is centralized in `@src/middleware.ts` via the `PROTECTED_ROUTES` array — add new gated paths there, not per-page.
 
 ## Project Structure
 
-`src/layouts/` (Astro layouts), `src/pages/` (routes, `src/pages/api/` for endpoints), `src/components/` (Astro + React; shadcn/ui primitives in `src/components/ui/`, "new-york" variant), `src/lib/` (services/helpers; `@src/lib/supabase.ts` is the Supabase SSR client), `src/types.ts` (shared entities/DTOs), `supabase/` (local Supabase config + migrations), `@wrangler.jsonc` (Cloudflare Workers config).
+`src/layouts/` (Astro layouts), `src/pages/` (routes, `src/pages/api/` for endpoints), `src/components/` (Astro + React; shadcn/ui primitives in `src/components/ui/`, "new-york" variant), `src/lib/` (services/helpers; `@src/lib/supabase.ts` is the `Database`-typed Supabase SSR client, `@src/lib/tournament.ts` holds domain bounds), `src/db/database.types.ts` (generated schema types — never hand-edit; ignored by ESLint and Prettier), `supabase/` (local Supabase config + migrations), `@wrangler.jsonc` (Cloudflare Workers config).
 
 ## Build, Test, and Development Commands
 
