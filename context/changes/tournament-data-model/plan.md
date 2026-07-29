@@ -327,28 +327,28 @@ Both migrations are additive; rollback is a matching `DROP` migration rather tha
 
 #### Automated
 
-- [x] 2.1 Migration lands cleanly: `npx supabase db push --linked`
-- [x] 2.2 Re-running reports nothing pending: `--dry-run`
-- [x] 2.3 Types generate and contain all three tables
+- [x] 2.1 Migration lands cleanly: `npx supabase db push --linked` — e6664f0
+- [x] 2.2 Re-running reports nothing pending: `--dry-run` — e6664f0
+- [x] 2.3 Types generate and contain all three tables — e6664f0
 
 #### Manual
 
-- [x] 2.4 All three tables visible in the dashboard with expected columns
-- [x] 2.5 Duplicate `join_code` is rejected
-- [x] 2.6 Match with identical players is rejected
+- [x] 2.4 All three tables visible in the dashboard with expected columns — e6664f0
+- [x] 2.5 Duplicate `join_code` is rejected — e6664f0
+- [x] 2.6 Match with identical players is rejected — e6664f0
 
 ### Phase 3: Access control
 
 #### Automated
 
-- [ ] 3.1 Migration applies cleanly: `npx supabase db push --linked`
-- [ ] 3.2 No pending migrations remain: `--dry-run`
-- [ ] 3.3 Schema still introspectable: `gen types` exits 0
+- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked`
+- [x] 3.2 No pending migrations remain: `--dry-run`
+- [x] 3.3 Schema still introspectable: `gen types` exits 0
 
 #### Manual
 
-- [ ] 3.4 Security Advisor reports no `rls_disabled_in_public` findings
-- [ ] 3.5 Policies list matches expectations; `tournament_players` has no INSERT policy
+- [x] 3.4 Security Advisor reports no `rls_disabled_in_public` findings
+- [x] 3.5 Policies list matches expectations; `tournament_players` has no INSERT policy
 
 ### Phase 4: Generated types & application constants
 
