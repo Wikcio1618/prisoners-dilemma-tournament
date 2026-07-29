@@ -8,7 +8,15 @@
       "Bash(set -e)",
       "Bash(rm -rf .bootstrap-scaffold/.git)",
       "Bash(mv .bootstrap-scaffold/.husky .)",
-      "Bash(mv .bootstrap-scaffold/.vscode .)"
+      "Bash(mv .bootstrap-scaffold/.vscode .)",
+      "Bash(gh issue *)",
+      "Bash(gh label *)",
+      "WebFetch(domain:docs.astro.build)",
+      "WebFetch(domain:developers.cloudflare.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:boardshape.com)"
     ]
   }
 }
