@@ -314,28 +314,28 @@ Both migrations are additive; rollback is a matching `DROP` migration rather tha
 
 #### Automated
 
-- [x] 1.1 CLI resolves locally: `npx supabase --version` prints ≥ 2.99.0
-- [x] 1.2 No blocked install scripts remain for this package
-- [x] 1.3 Lint and build still pass after the dependency bump
+- [x] 1.1 CLI resolves locally: `npx supabase --version` prints ≥ 2.99.0 — f43f3bb
+- [x] 1.2 No blocked install scripts remain for this package — f43f3bb
+- [x] 1.3 Lint and build still pass after the dependency bump — f43f3bb
 
 #### Manual
 
-- [x] 1.4 `npx supabase projects list` shows the linked project without re-prompting
-- [x] 1.5 `supabase/.temp/` exists locally and does not appear in `git status`
+- [x] 1.4 `npx supabase projects list` shows the linked project without re-prompting — f43f3bb
+- [x] 1.5 `supabase/.temp/` exists locally and does not appear in `git status` — f43f3bb
 
 ### Phase 2: Tables & constraints
 
 #### Automated
 
-- [ ] 2.1 Migration lands cleanly: `npx supabase db push --linked`
-- [ ] 2.2 Re-running reports nothing pending: `--dry-run`
-- [ ] 2.3 Types generate and contain all three tables
+- [x] 2.1 Migration lands cleanly: `npx supabase db push --linked`
+- [x] 2.2 Re-running reports nothing pending: `--dry-run`
+- [x] 2.3 Types generate and contain all three tables
 
 #### Manual
 
-- [ ] 2.4 All three tables visible in the dashboard with expected columns
-- [ ] 2.5 Duplicate `join_code` is rejected
-- [ ] 2.6 Match with identical players is rejected
+- [x] 2.4 All three tables visible in the dashboard with expected columns
+- [x] 2.5 Duplicate `join_code` is rejected
+- [x] 2.6 Match with identical players is rejected
 
 ### Phase 3: Access control
 
