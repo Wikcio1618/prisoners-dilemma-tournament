@@ -1,9 +1,9 @@
 ---
 change_id: realtime-match-scaffold
 title: Minimal live-room scaffold for one hidden-then-revealed round
-status: new
+status: implementing
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-29
 archived_at: null
 ---
 

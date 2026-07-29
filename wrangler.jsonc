@@ -1,9 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "prisoners-dilemma-tournament",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  // Custom entrypoint so WebSocket upgrades can be intercepted before Astro's handler
+  // appends Set-Cookie to an immutable Durable Object response. Reverting this line to
+  // "@astrojs/cloudflare/entrypoints/server" restores the stock request path exactly.
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-05-08",
   "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [{ "name": "MATCH_ROOM", "class_name": "MatchRoom" }],
+  },
+  // new_sqlite_classes is ONE-WAY: the SQLite backend cannot be enabled on an
+  // already-deployed class, and KV-backed namespace creation has been blocked
+  // account-wide since 2026-07-09. If a deploy ever lands without this, recovery is a
+  // renamed class plus a new migration tag — not an edit here.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MatchRoom"] }],
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
