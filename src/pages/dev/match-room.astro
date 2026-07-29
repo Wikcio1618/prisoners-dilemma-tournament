@@ -1,0 +1,210 @@
+---
+// Throwaway verification harness for the F-02 match-room scaffold.
+//
+// Deliberately NOT linked from any navigation and NOT listed in PROTECTED_ROUTES —
+// it exists only to make the hidden-until-both-commit guarantee observable in two
+// browser tabs. S-03 builds the real match screen; delete or replace this then.
+//
+// Open the same room id in two tabs:
+//   /dev/match-room?id=<uuid>
+//
+// The raw message log is the point. Verifying the guarantee means confirming the
+// opponent's move is absent from the WIRE before both commits land, which a rendered
+// UI cannot show you.
+export const prerender = false;
+
+const requestedId = Astro.url.searchParams.get("id") ?? crypto.randomUUID();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Match room harness (dev)</title>
+  </head>
+  <body>
+    <main>
+      <h1>Match room harness</h1>
+      <p class="hint">
+        Dev-only. Open this exact URL in a second tab to play both seats. Commit in one tab and confirm the other tab's
+        log contains no move value until both have committed.
+      </p>
+
+      <dl class="status">
+        <dt>Room</dt>
+        <dd><code id="room-id">{requestedId}</code></dd>
+        <dt>Connection</dt>
+        <dd><span id="conn">connecting…</span></dd>
+        <dt>Seat</dt>
+        <dd><span id="seat">—</span></dd>
+        <dt>Committed</dt>
+        <dd><span id="committed">a: no · b: no</span></dd>
+        <dt>Result</dt>
+        <dd><span id="result">—</span></dd>
+      </dl>
+
+      <div class="actions">
+        <button id="cooperate" type="button" disabled>Współpraca (cooperate)</button>
+        <button id="sabotage" type="button" disabled>Sabotaż (sabotage)</button>
+      </div>
+
+      <h2>Raw messages received</h2>
+      <pre id="log" aria-live="polite"></pre>
+    </main>
+
+    <script is:inline define:vars={{ requestedId }}>
+      const logEl = document.getElementById("log");
+      const connEl = document.getElementById("conn");
+      const seatEl = document.getElementById("seat");
+      const committedEl = document.getElementById("committed");
+      const resultEl = document.getElementById("result");
+      const cooperateBtn = document.getElementById("cooperate");
+      const sabotageBtn = document.getElementById("sabotage");
+
+      // Keep the room id in the URL so the second tab can be opened by copy-paste.
+      if (!new URL(window.location.href).searchParams.get("id")) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("id", requestedId);
+        window.history.replaceState(null, "", url);
+      }
+
+      const append = (line) => {
+        logEl.textContent += `${new Date().toISOString().slice(11, 23)}  ${line}\n`;
+      };
+
+      const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+      const socket = new WebSocket(`${scheme}://${window.location.host}/ws/match/${requestedId}`);
+
+      const setEnabled = (enabled) => {
+        cooperateBtn.disabled = !enabled;
+        sabotageBtn.disabled = !enabled;
+      };
+
+      socket.addEventListener("open", () => {
+        connEl.textContent = "open";
+        append("(socket open)");
+      });
+
+      socket.addEventListener("close", (event) => {
+        connEl.textContent = `closed (${event.code})`;
+        setEnabled(false);
+        // No automatic retry by design — reconnect policy belongs to S-03.
+        append(`(socket closed: ${event.code})`);
+      });
+
+      socket.addEventListener("error", () => {
+        connEl.textContent = "error";
+        append("(socket error)");
+      });
+
+      socket.addEventListener("message", (event) => {
+        // Logged verbatim, before any interpretation. This is the evidence.
+        append(event.data);
+
+        let message;
+        try {
+          message = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+
+        if (message.type === "seat") {
+          seatEl.textContent = message.seat;
+          setEnabled(true);
+        } else if (message.type === "state") {
+          committedEl.textContent = `a: ${message.committed.a ? "yes" : "no"} · b: ${
+            message.committed.b ? "yes" : "no"
+          }`;
+        } else if (message.type === "reveal") {
+          committedEl.textContent = "a: yes · b: yes";
+          resultEl.textContent = `a played ${message.moves.a} · b played ${message.moves.b}`;
+          setEnabled(false);
+        } else if (message.type === "error") {
+          resultEl.textContent = `error: ${message.reason}`;
+        }
+      });
+
+      const commit = (move) => {
+        socket.send(JSON.stringify({ type: "commit", move }));
+        setEnabled(false);
+        append(`(sent commit: ${move})`);
+      };
+
+      cooperateBtn.addEventListener("click", () => commit("cooperate"));
+      sabotageBtn.addEventListener("click", () => commit("sabotage"));
+    </script>
+
+    <style>
+      body {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        margin: 0;
+        padding: 2rem;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 46rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      h2 {
+        font-size: 1rem;
+        margin-top: 2rem;
+      }
+      .hint {
+        color: #666;
+        font-size: 0.85rem;
+      }
+      .status {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.25rem 1rem;
+        margin: 1.5rem 0;
+      }
+      .status dt {
+        color: #666;
+      }
+      .status dd {
+        margin: 0;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+      pre {
+        background: #f4f4f4;
+        padding: 1rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        min-height: 8rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #111;
+          color: #eee;
+        }
+        .hint,
+        .status dt {
+          color: #999;
+        }
+        pre {
+          background: #1c1c1c;
+        }
+      }
+    </style>
+  </body>
+</html>

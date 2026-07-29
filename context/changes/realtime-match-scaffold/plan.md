@@ -348,11 +348,11 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx tsc --noEmit`
-- [x] 2.2 Build succeeds: `npm run build`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 No in-memory move state exists
-- [x] 2.5 Hibernation is not disabled anywhere
+- [x] 2.1 Type checking passes: `npx tsc --noEmit` — 9d188b8
+- [x] 2.2 Build succeeds: `npm run build` — 9d188b8
+- [x] 2.3 Linting passes: `npm run lint` — 9d188b8
+- [x] 2.4 No in-memory move state exists — 9d188b8
+- [x] 2.5 Hibernation is not disabled anywhere — 9d188b8
 
 #### Manual
 
@@ -365,9 +365,9 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [ ] 3.1 Build succeeds with the new page: `npm run build`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 The page is not gated in `src/middleware.ts`
+- [x] 3.1 Build succeeds with the new page: `npm run build`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 The page is not gated in `src/middleware.ts`
 
 #### Manual
 
