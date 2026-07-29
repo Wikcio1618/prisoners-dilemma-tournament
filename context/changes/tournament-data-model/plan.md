@@ -341,24 +341,24 @@ Both migrations are additive; rollback is a matching `DROP` migration rather tha
 
 #### Automated
 
-- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked`
-- [x] 3.2 No pending migrations remain: `--dry-run`
-- [x] 3.3 Schema still introspectable: `gen types` exits 0
+- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked` — 8cef279
+- [x] 3.2 No pending migrations remain: `--dry-run` — 8cef279
+- [x] 3.3 Schema still introspectable: `gen types` exits 0 — 8cef279
 
 #### Manual
 
-- [x] 3.4 Security Advisor reports no `rls_disabled_in_public` findings
-- [x] 3.5 Policies list matches expectations; `tournament_players` has no INSERT policy
+- [x] 3.4 Security Advisor reports no `rls_disabled_in_public` findings — 8cef279
+- [x] 3.5 Policies list matches expectations; `tournament_players` has no INSERT policy — 8cef279
 
 ### Phase 4: Generated types & application constants
 
 #### Automated
 
-- [ ] 4.1 Types generate without error into `src/db/database.types.ts`
-- [ ] 4.2 Type checking passes: `npm run build`
-- [ ] 4.3 Linting passes: `npm run lint`
+- [x] 4.1 Types generate without error into `src/db/database.types.ts`
+- [x] 4.2 Type checking passes: `npm run build`
+- [x] 4.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 4.4 Autocomplete resolves table and column names on the typed client
-- [ ] 4.5 Player cap constant matches the literal inside `join_tournament`
+- [x] 4.4 Autocomplete resolves table and column names on the typed client
+- [x] 4.5 Player cap constant matches the literal inside `join_tournament`
