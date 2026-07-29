@@ -18,6 +18,16 @@ import { MatchRoom } from "./durable/match-room";
  */
 const ROOM_PREFIX = "/ws/match/";
 
+/**
+ * Room ids must be canonical UUIDs.
+ *
+ * This endpoint is unauthenticated by design, and `idFromName` creates a billed, persistent
+ * Durable Object for any string it is given. Restricting the accepted keyspace to UUIDs is
+ * what stops an arbitrary caller minting objects from arbitrary strings — it is a
+ * containment measure, not a validation nicety.
+ */
+const ROOM_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -25,7 +35,10 @@ export default {
 
     if (url.pathname.startsWith(ROOM_PREFIX) && isWebSocketUpgrade) {
       const roomId = url.pathname.slice(ROOM_PREFIX.length);
-      // Phase 2 adds UUID validation here, before any object is created.
+      if (!ROOM_ID_PATTERN.test(roomId)) {
+        // Rejected before any stub is obtained, so no object is ever created.
+        return new Response("Room id must be a UUID", { status: 400 });
+      }
       const stub = env.MATCH_ROOM.get(env.MATCH_ROOM.idFromName(roomId));
       return stub.fetch(request);
     }

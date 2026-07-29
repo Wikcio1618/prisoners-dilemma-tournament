@@ -333,10 +333,10 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npx tsc --noEmit`
-- [x] 1.2 Build succeeds with the custom entrypoint: `npm run build`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 `wrangler.jsonc` declares the class as SQLite-backed
+- [x] 1.1 Type checking passes: `npx tsc --noEmit` — 3b14376
+- [x] 1.2 Build succeeds with the custom entrypoint: `npm run build` — 3b14376
+- [x] 1.3 Linting passes: `npm run lint` — 3b14376
+- [x] 1.4 `wrangler.jsonc` declares the class as SQLite-backed — 3b14376
 
 #### Manual
 
@@ -348,11 +348,11 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 2.2 Build succeeds: `npm run build`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 No in-memory move state exists
-- [ ] 2.5 Hibernation is not disabled anywhere
+- [x] 2.1 Type checking passes: `npx tsc --noEmit`
+- [x] 2.2 Build succeeds: `npm run build`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 No in-memory move state exists
+- [x] 2.5 Hibernation is not disabled anywhere
 
 #### Manual
 
