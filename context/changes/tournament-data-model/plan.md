@@ -354,11 +354,11 @@ Both migrations are additive; rollback is a matching `DROP` migration rather tha
 
 #### Automated
 
-- [x] 4.1 Types generate without error into `src/db/database.types.ts`
-- [x] 4.2 Type checking passes: `npm run build`
-- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.1 Types generate without error into `src/db/database.types.ts` — b9460a9
+- [x] 4.2 Type checking passes: `npm run build` — b9460a9
+- [x] 4.3 Linting passes: `npm run lint` — b9460a9
 
 #### Manual
 
-- [x] 4.4 Autocomplete resolves table and column names on the typed client
-- [x] 4.5 Player cap constant matches the literal inside `join_tournament`
+- [x] 4.4 Autocomplete resolves table and column names on the typed client — b9460a9
+- [x] 4.5 Player cap constant matches the literal inside `join_tournament` — b9460a9

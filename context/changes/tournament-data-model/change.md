@@ -1,7 +1,7 @@
 ---
 change_id: tournament-data-model
 title: Tournament data model
-status: implementing
+status: implemented
 created: 2026-07-28
 updated: 2026-07-29
 archived_at: null
