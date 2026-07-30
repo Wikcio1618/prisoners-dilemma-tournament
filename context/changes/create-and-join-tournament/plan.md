@@ -369,7 +369,7 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 #### Manual
 
 - [ ] 1.6 6-digit code accepted; 5-digit and 8-char alphanumeric rejected
-- [ ] 1.7 Generator preserves leading zeros
+- [x] 1.7 Generator preserves leading zeros
 
 ### Phase 2: Create a tournament
 
@@ -382,10 +382,10 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Manual
 
-- [ ] 2.5 Creating a tournament lands on a lobby showing a 6-digit code
-- [ ] 2.6 The creator appears on their own roster
-- [ ] 2.7 Round counts of 0, 21 and non-numbers are rejected before the database
-- [ ] 2.8 `/tournaments/new` signed out redirects to sign-in
+- [x] 2.5 Creating a tournament lands on a lobby showing a 6-digit code
+- [x] 2.6 The creator appears on their own roster
+- [x] 2.7 Round counts of 0, 21 and non-numbers are rejected before the database
+- [x] 2.8 `/tournaments/new` signed out redirects to sign-in
 
 ### Phase 3: Join by code and by link
 
@@ -397,11 +397,11 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Manual
 
-- [ ] 3.4 A second account joins by code and appears on the roster
-- [ ] 3.5 `/join/<code>` signed out returns to the correct lobby after sign-in
-- [ ] 3.6 Unknown code and already-started code give distinct Polish messages
-- [ ] 3.7 `next=https://example.com` and `next=//example.com` do not redirect off-site
-- [ ] 3.8 Joining twice is idempotent
+- [x] 3.4 A second account joins by code and appears on the roster
+- [x] 3.5 `/join/<code>` signed out returns to the correct lobby after sign-in
+- [x] 3.6 Unknown code and already-started code give distinct Polish messages
+- [x] 3.7 `next=https://example.com` and `next=//example.com` do not redirect off-site
+- [x] 3.8 Joining twice is idempotent
 
 ### Phase 4: Lobby with live roster
 
@@ -413,10 +413,10 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Manual
 
-- [ ] 4.4 A second account joining appears on the roster without a reload
-- [ ] 4.5 The tournament list shows created and joined tournaments and omits others
-- [ ] 4.6 The roster endpoint returns 404 for a non-member
-- [ ] 4.7 The shared link opened in a clean session reaches the right lobby
+- [x] 4.4 A second account joining appears on the roster without a reload
+- [x] 4.5 The tournament list shows created and joined tournaments and omits others
+- [x] 4.6 The roster endpoint returns 404 for a non-member
+- [x] 4.7 The shared link opened in a clean session reaches the right lobby
 - [ ] 4.8 Polling stops once the tournament is started
 
 ### Phase 5: Leave and start
@@ -429,8 +429,8 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Manual
 
-- [ ] 5.4 A member leaving disappears from the other player's roster
+- [x] 5.4 A member leaving disappears from the other player's roster
 - [ ] 5.5 The creator sees no leave control; a non-creator sees no start control
-- [ ] 5.6 After start, a further join with the same code is rejected as already-started
-- [ ] 5.7 Pressing start twice reports already-started rather than erroring
-- [ ] 5.8 A hand-crafted start POST from a non-creator does not change the status
+- [x] 5.6 After start, a further join with the same code is rejected as already-started
+- [x] 5.7 Pressing start twice reports already-started rather than erroring
+- [x] 5.8 A hand-crafted start POST from a non-creator does not change the status
