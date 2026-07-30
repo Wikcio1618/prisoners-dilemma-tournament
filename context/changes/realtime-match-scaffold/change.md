@@ -34,9 +34,22 @@ This supersedes the "No socket authentication" guardrail in the plan. What chang
 UUID, because verifying the two connecting users against `matches.player_a_id` /
 `player_b_id` needs rows that S-02 has yet to write.
 
-**Consequence for tooling:** the endpoint no longer accepts unauthenticated sockets, so the
-Node-based protocol scripts used during implementation cannot reach it. Verification of the
-authenticated paths is browser-only until a test account exists.
+**Verified against production (2026-07-30), 11/11**, using three real accounts and Node's
+built-in WebSocket with session cookies attached: two accounts get distinct seats; the
+opponent's wire carries only commit flags before both commits; a reconnecting player resumes
+their *own* seat with their own state and no leak; a third account is refused; the reveal
+reaches both with both moves; a post-reveal commit starts no new round; a completed round
+replays to a player but stays closed to a stranger.
+
+**Test accounts created for that run** — `f02-test-1@example.com`, `f02-test-2@example.com`,
+`f02-test-3@example.com` (password `TestPassw0rd!<n>`). Delete them under Authentication →
+Users when no longer needed; they exist only because email confirmation was disabled.
+
+**Auth configuration changed** to unblock this: `supabase config push` set
+`enable_confirmations = false` and corrected the Site URL, which had been left at the shipped
+localhost default so confirmation emails pointed at a dead link. That push also disabled TOTP
+MFA, which had been enabled on the project and is unused by the app — re-enable in
+`config.toml` and push if that was deliberate.
 
 ### Implementation close-out (2026-07-30)
 
