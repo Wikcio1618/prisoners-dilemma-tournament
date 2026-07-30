@@ -1,7 +1,7 @@
 ---
 change_id: realtime-match-scaffold
 title: Minimal live-room scaffold for one hidden-then-revealed round
-status: implemented
+status: impl_reviewed
 created: 2026-07-28
 updated: 2026-07-30
 archived_at: null
@@ -10,6 +10,33 @@ archived_at: null
 ## Notes
 
 from @context/foundation/roadmap.md
+
+### Scope change: identity binding pulled forward from S-03 (2026-07-30)
+
+The implementation review found that seats bound to socket *arrival order* rather than to
+people, which broke the hidden-move guarantee between two honest players (a dropped
+connection was enough). Fixing that without identity forced a choice between two failures —
+strangers inheriting committed seats, or legitimate reconnection being refused. Neither was
+acceptable, so **socket authentication was brought into F-02** rather than left to S-03.
+
+This supersedes the "No socket authentication" guardrail in the plan. What changed:
+
+- `src/worker.ts` resolves the Supabase user from the session cookie on the upgrade request,
+  before the Durable Object stub is obtained, and rejects anonymous upgrades with 401.
+- The user id travels to the room in the `X-Player-Id` header, always overwritten so a
+  client-supplied value cannot impersonate.
+- `MatchRoom` persists `player:a` / `player:b` and resolves a seat by identity: you reclaim
+  the seat you already hold, or take an unclaimed one. Nobody inherits a committed seat.
+- `playerId` in the message body — which the plan promised and the implementation omitted —
+  is no longer needed and was not added. Identity comes from the session instead.
+
+**Still deferred to S-03:** match membership. Any *logged-in* user can still join any room
+UUID, because verifying the two connecting users against `matches.player_a_id` /
+`player_b_id` needs rows that S-02 has yet to write.
+
+**Consequence for tooling:** the endpoint no longer accepts unauthenticated sockets, so the
+Node-based protocol scripts used during implementation cannot reach it. Verification of the
+authenticated paths is browser-only until a test account exists.
 
 ### Implementation close-out (2026-07-30)
 

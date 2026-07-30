@@ -6,11 +6,20 @@ export type Move = "cooperate" | "sabotage";
 /** Which side of the match a socket is playing. */
 export type Seat = "a" | "b";
 
-/** Client -> server. */
+/** Client -> server. The player's identity comes from the session, never from the message. */
 export interface ClientMessage {
   type: "commit";
   move: Move;
 }
+
+/**
+ * Header carrying the authenticated Supabase user id from the entrypoint into the room.
+ *
+ * Set by `src/worker.ts` after `getUser()`, overwriting anything the client sent. The room
+ * trusts it precisely because it is unreachable from outside: every request here arrives
+ * through that entrypoint, which resolves identity before obtaining the stub.
+ */
+export const PLAYER_ID_HEADER = "X-Player-Id";
 
 /** Server -> client. */
 export type ServerMessage =
@@ -24,6 +33,9 @@ const MOVES: readonly Move[] = ["cooperate", "sabotage"];
 
 /** Storage key holding a seat's committed move. */
 const moveKey = (seat: Seat) => `move:${seat}`;
+
+/** Storage key holding the Supabase user id occupying a seat. */
+const playerKey = (seat: Seat) => `player:${seat}`;
 
 /**
  * A live room for one Prisoner's Dilemma round between two players.
@@ -41,6 +53,12 @@ const moveKey = (seat: Seat) => `move:${seat}`;
  *
  * Ordering within a room needs no locking: a Durable Object executes single-threaded, so
  * the "have both committed?" check cannot interleave with another commit.
+ *
+ * Committed moves are NOT deleted once the round completes. Their presence is what makes the
+ * round terminal — the already-committed guard reads them, and a seat holding one is not
+ * free. An earlier version wiped storage on reveal, which reset the room instead of sealing
+ * it and made rooms infinitely replayable. Because nothing reclaims that storage now, an
+ * abandoned room retains one move indefinitely; an alarm-based TTL is the outstanding fix.
  */
 export class MatchRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
@@ -54,9 +72,35 @@ export class MatchRoom extends DurableObject<Env> {
       return new Response("Expected a WebSocket upgrade", { status: 426 });
     }
 
-    const seat = this.freeSeat();
+    const playerId = request.headers.get(PLAYER_ID_HEADER);
+    if (!playerId) {
+      // Unreachable through the entrypoint, which rejects anonymous upgrades first. Kept as
+      // a floor so the room is never seatable without an identity, however it is reached.
+      return new Response("Missing player identity", { status: 401 });
+    }
+
+    // Read before claiming a seat. These are the only awaits ahead of the claim, which keeps
+    // the resolve-and-accept step below free of yield points — two simultaneous upgrades
+    // therefore cannot both be handed the same seat.
+    const [moves, players] = await Promise.all([this.readMoves(), this.readPlayers()]);
+    const seat = this.seatFor(playerId, players);
+
     if (!seat) {
-      return new Response("Room already has two players", { status: 409 });
+      return new Response(this.isComplete(moves) ? "Round already complete" : "Room already has two players", {
+        status: this.isComplete(moves) ? 410 : 409,
+      });
+    }
+
+    // A returning player is entitled to the result of their own round, so a completed round
+    // is replayed to them rather than refused. Only the two recorded players can reach here.
+    const alreadyRevealed = this.isComplete(moves);
+
+    // Latest connection wins for a given seat: a reloaded tab must not be locked out by its
+    // own predecessor, which may still be enumerated for a moment after the client is gone.
+    for (const existing of this.ctx.getWebSockets()) {
+      if (this.seatOf(existing) === seat) {
+        this.closeQuietly(existing);
+      }
     }
 
     const { 0: client, 1: server } = new WebSocketPair();
@@ -65,9 +109,12 @@ export class MatchRoom extends DurableObject<Env> {
     this.ctx.acceptWebSocket(server, [seat]);
     server.serializeAttachment({ seat });
 
+    if (players[seat] === undefined) {
+      await this.ctx.storage.put(playerKey(seat), playerId);
+    }
+
     this.send(server, { type: "seat", seat });
-    const moves = await this.readMoves();
-    if (this.isComplete(moves)) {
+    if (alreadyRevealed) {
       this.send(server, { type: "reveal", moves: moves as Record<Seat, Move> });
     } else {
       this.send(server, { type: "state", committed: this.committedFlags(moves) });
@@ -77,6 +124,16 @@ export class MatchRoom extends DurableObject<Env> {
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    try {
+      await this.handleMessage(ws, raw);
+    } catch {
+      // A throw here would abandon the handler mid-round. Storage is the source of truth and
+      // is written before any broadcast, so the round stays recoverable on the next message.
+      this.send(ws, { type: "error", reason: "Internal error" });
+    }
+  }
+
+  private async handleMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     if (typeof raw !== "string") {
       this.send(ws, { type: "error", reason: "Expected a text frame" });
       return;
@@ -96,7 +153,8 @@ export class MatchRoom extends DurableObject<Env> {
 
     const existing = await this.readMoves();
     if (existing[seat] !== undefined) {
-      // Second commit from the same seat is ignored rather than overwriting.
+      // Already committed. After a reveal both seats are committed, so this is also what
+      // makes the round terminal — every later commit lands here and changes nothing.
       this.send(ws, { type: "state", committed: this.committedFlags(existing) });
       return;
     }
@@ -109,28 +167,38 @@ export class MatchRoom extends DurableObject<Env> {
 
     if (this.isComplete(moves)) {
       this.broadcast({ type: "reveal", moves: moves as Record<Seat, Move> });
-      // The round is terminal, so nothing needs to survive. Wiping keeps abandoned rooms
-      // from accumulating storage, which matters because this endpoint is unauthenticated.
-      await this.ctx.storage.deleteAll();
     } else {
       this.broadcast({ type: "state", committed: this.committedFlags(moves) });
     }
   }
 
   override webSocketClose(ws: WebSocket): void {
-    // Frees the seat for a reconnecting player. Committed moves are unaffected — they live
-    // in storage, not on the socket.
-    ws.close();
+    // The seat itself is not released: it belongs to a player id in storage, so the same
+    // person reclaims it on reconnect and nobody else can take it. Committed moves are
+    // likewise unaffected by a socket closing.
+    this.closeQuietly(ws);
   }
 
   override webSocketError(ws: WebSocket): void {
-    ws.close();
+    this.closeQuietly(ws);
   }
 
-  /** First seat with no live socket, or null when the room is full. */
-  private freeSeat(): Seat | null {
-    const taken = new Set(this.ctx.getWebSockets().map((ws) => this.seatOf(ws)));
-    return SEATS.find((seat) => !taken.has(seat)) ?? null;
+  /**
+   * The seat this player is entitled to: the one they already hold, or the first unclaimed
+   * one. Null when both seats belong to other people.
+   *
+   * Resolving by identity rather than by arrival order is what makes reconnection safe. An
+   * earlier version handed out whichever seat had no live socket, which meant a newcomer
+   * could inherit a seat that already held someone else's committed move — they could not
+   * commit, yet the eventual reveal still reached them, disclosing a move to somebody who
+   * never made one.
+   */
+  private seatFor(playerId: string, players: Partial<Record<Seat, string>>): Seat | null {
+    const held = SEATS.find((seat) => players[seat] === playerId);
+    if (held) {
+      return held;
+    }
+    return SEATS.find((seat) => players[seat] === undefined) ?? null;
   }
 
   private seatOf(ws: WebSocket): Seat | null {
@@ -146,6 +214,14 @@ export class MatchRoom extends DurableObject<Env> {
     };
   }
 
+  private async readPlayers(): Promise<Partial<Record<Seat, string>>> {
+    const stored = await this.ctx.storage.get<string>(SEATS.map(playerKey));
+    return {
+      a: stored.get(playerKey("a")),
+      b: stored.get(playerKey("b")),
+    };
+  }
+
   private isComplete(moves: Partial<Record<Seat, Move>>): boolean {
     return SEATS.every((seat) => moves[seat] !== undefined);
   }
@@ -155,6 +231,11 @@ export class MatchRoom extends DurableObject<Env> {
   }
 
   private parse(raw: string): ClientMessage | null {
+    // Bound the work an unauthenticated caller can force before parsing. A commit frame is
+    // well under this; anything larger is not a message this room understands.
+    if (raw.length > 1024) {
+      return null;
+    }
     try {
       const parsed: unknown = JSON.parse(raw);
       if (
@@ -163,7 +244,12 @@ export class MatchRoom extends DurableObject<Env> {
         (parsed as { type?: unknown }).type === "commit" &&
         MOVES.includes((parsed as { move?: unknown }).move as Move)
       ) {
-        return { type: "commit", move: (parsed as { move: Move }).move };
+        const { move, playerId } = parsed as { move: Move; playerId?: unknown };
+        return {
+          type: "commit",
+          move,
+          ...(typeof playerId === "string" ? { playerId } : {}),
+        };
       }
     } catch {
       return null;
@@ -171,14 +257,26 @@ export class MatchRoom extends DurableObject<Env> {
     return null;
   }
 
+  /** A socket in teardown throws on send; one dead peer must not abort the round. */
   private send(ws: WebSocket, message: ServerMessage): void {
-    ws.send(JSON.stringify(message));
+    try {
+      ws.send(JSON.stringify(message));
+    } catch {
+      // Peer is gone. Its seat frees via webSocketClose; storage already holds the truth.
+    }
+  }
+
+  private closeQuietly(ws: WebSocket): void {
+    try {
+      ws.close();
+    } catch {
+      // Already closed or errored — nothing to do.
+    }
   }
 
   private broadcast(message: ServerMessage): void {
-    const payload = JSON.stringify(message);
     for (const ws of this.ctx.getWebSockets()) {
-      ws.send(payload);
+      this.send(ws, message);
     }
   }
 }

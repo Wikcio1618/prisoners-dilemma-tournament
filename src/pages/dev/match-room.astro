@@ -87,10 +87,14 @@ const requestedId = Astro.url.searchParams.get("id") ?? crypto.randomUUID();
       });
 
       socket.addEventListener("close", (event) => {
+        // A rejected upgrade surfaces here as a close with no useful code, so the likely
+        // causes are spelled out rather than leaving a bare number on screen.
         connEl.textContent = `closed (${event.code})`;
         setEnabled(false);
         // No automatic retry by design — reconnect policy belongs to S-03.
         append(`(socket closed: ${event.code})`);
+        append("(if it never opened: sign in first — rooms require a session; or the room's");
+        append(" two seats belong to other players, or its round is already complete)");
       });
 
       socket.addEventListener("error", () => {

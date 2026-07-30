@@ -1,5 +1,6 @@
 import { handle } from "@astrojs/cloudflare/handler";
-import { MatchRoom } from "./durable/match-room";
+import { MatchRoom, PLAYER_ID_HEADER } from "./durable/match-room";
+import { createWorkerClient } from "./lib/supabase-worker";
 
 /**
  * Custom Worker entrypoint.
@@ -21,10 +22,9 @@ const ROOM_PREFIX = "/ws/match/";
 /**
  * Room ids must be canonical UUIDs.
  *
- * This endpoint is unauthenticated by design, and `idFromName` creates a billed, persistent
- * Durable Object for any string it is given. Restricting the accepted keyspace to UUIDs is
- * what stops an arbitrary caller minting objects from arbitrary strings — it is a
- * containment measure, not a validation nicety.
+ * `idFromName` creates a billed, persistent Durable Object for any string it is given, so
+ * restricting the accepted keyspace to UUIDs bounds what a caller can mint. Identity is
+ * checked as well (below), but this runs first and costs nothing.
  */
 const ROOM_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -34,13 +34,34 @@ export default {
     const isWebSocketUpgrade = request.headers.get("Upgrade")?.toLowerCase() === "websocket";
 
     if (url.pathname.startsWith(ROOM_PREFIX) && isWebSocketUpgrade) {
-      const roomId = url.pathname.slice(ROOM_PREFIX.length);
+      // Lowercased before use: the pattern below is case-insensitive but idFromName is not,
+      // so without this a UUID and its uppercase form mint two different Durable Objects —
+      // two clients that normalise case differently would silently never meet.
+      const roomId = url.pathname.slice(ROOM_PREFIX.length).toLowerCase();
       if (!ROOM_ID_PATTERN.test(roomId)) {
         // Rejected before any stub is obtained, so no object is ever created.
         return new Response("Room id must be a UUID", { status: 400 });
       }
+      // Identity is resolved here, before the stub is obtained, because the session cookie
+      // is on the upgrade request and the Durable Object has no access to it. Seats bind to
+      // this id inside the room, which is what lets a reconnecting player resume their own
+      // seat instead of being handed whichever one happens to be free.
+      const supabase = createWorkerClient(request.headers, env.SUPABASE_URL, env.SUPABASE_KEY);
+      if (!supabase) {
+        return new Response("Supabase is not configured", { status: 503 });
+      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return new Response("Sign in to join a match room", { status: 401 });
+      }
+
       const stub = env.MATCH_ROOM.get(env.MATCH_ROOM.idFromName(roomId));
-      return stub.fetch(request);
+      const headers = new Headers(request.headers);
+      // Overwritten, never appended: a client-supplied value must not be able to impersonate.
+      headers.set(PLAYER_ID_HEADER, user.id);
+      return stub.fetch(new Request(request, { headers }));
     }
 
     return handle(request, env, ctx);
