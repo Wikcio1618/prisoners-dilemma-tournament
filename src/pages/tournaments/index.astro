@@ -1,0 +1,63 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+
+export const prerender = false;
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+// No WHERE clause on ownership: the SELECT policy already returns only tournaments the caller
+// created or belongs to. Adding a redundant filter here would hide a policy failure instead
+// of exposing one, and this list is the first place such a failure would be visible.
+const { data: tournaments } = supabase
+  ? await supabase
+      .from("tournaments")
+      .select("id, join_code, status, rounds_per_match, created_at")
+      .order("created_at", { ascending: false })
+  : { data: [] };
+
+const statusLabel: Record<string, string> = {
+  lobby: "Poczekalnia",
+  started: "W trakcie",
+  finished: "Zakończony",
+};
+---
+
+<Layout title="Moje turnieje">
+  <div class="bg-cosmic flex min-h-screen items-start justify-center p-4">
+    <div class="mt-10 w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+      <h1
+        class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent"
+      >
+        Moje turnieje
+      </h1>
+
+      {
+        (tournaments ?? []).length === 0 ? (
+          <p class="text-center text-sm text-blue-100/60">Nie bierzesz jeszcze udziału w żadnym turnieju.</p>
+        ) : (
+          <ul class="space-y-2">
+            {(tournaments ?? []).map((t) => (
+              <li>
+                <a
+                  href={`/tournaments/${t.id}`}
+                  class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm transition-colors hover:bg-white/10"
+                >
+                  <span class="font-mono tracking-widest">{t.join_code}</span>
+                  <span class="text-xs text-blue-100/60">
+                    {statusLabel[t.status] ?? t.status} · {t.rounds_per_match} rund
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="mt-6 flex justify-center gap-4 text-sm">
+        <a href="/tournaments/new" class="text-purple-300 hover:underline">Nowy turniej</a>
+        <a href="/tournaments/join" class="text-purple-300 hover:underline">Dołącz kodem</a>
+      </div>
+    </div>
+  </div>
+</Layout>

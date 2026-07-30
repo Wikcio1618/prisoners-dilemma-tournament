@@ -1,0 +1,117 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import LobbyRoster from "@/components/tournament/LobbyRoster";
+import { createClient } from "@/lib/supabase";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const { user } = Astro.locals;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+// Visibility is the SELECT policy's job: it returns the row only to members and the creator.
+// A non-member therefore gets nothing here, and the page renders a not-found panel — which
+// also avoids confirming that the tournament exists at all.
+//
+// Deliberately no top-level `return Astro.redirect(...)`: that idiomatic pattern crashes
+// @typescript-eslint/no-misused-promises under astro-eslint-parser, and rendering the
+// not-found state inline is equivalent here.
+const { data: tournament } =
+  id && supabase
+    ? await supabase
+        .from("tournaments")
+        .select("id, status, join_code, rounds_per_match, creator_id")
+        .eq("id", id)
+        .maybeSingle()
+    : { data: null };
+
+const { data: players } =
+  tournament && supabase
+    ? await supabase
+        .from("tournament_players")
+        .select("user_id, joined_at")
+        .eq("tournament_id", tournament.id)
+        .order("joined_at", { ascending: true })
+    : { data: [] };
+
+const joinUrl = tournament ? new URL(`/join/${tournament.join_code}`, Astro.url.origin).toString() : "";
+const isCreator = tournament?.creator_id === user?.id;
+const error = Astro.url.searchParams.get("error");
+---
+
+<Layout title="Poczekalnia turnieju">
+  <div class="bg-cosmic flex min-h-screen items-start justify-center p-4">
+    <div class="mt-10 w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+      {
+        !tournament ? (
+          <div class="text-center">
+            <h1 class="mb-2 text-xl font-bold">Nie znaleziono turnieju</h1>
+            <p class="text-sm text-blue-100/60">Nie masz dostępu do tego turnieju albo on nie istnieje.</p>
+            <a href="/tournaments" class="mt-4 inline-block text-sm text-purple-300 hover:underline">
+              ← Moje turnieje
+            </a>
+          </div>
+        ) : (
+          <>
+            <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent">
+              Poczekalnia
+            </h1>
+
+            {error && (
+              <p class="mb-4 rounded-lg border border-red-400/40 bg-red-400/10 p-3 text-sm text-red-200">{error}</p>
+            )}
+
+            {tournament.status === "lobby" ? (
+              <div class="mb-6 rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                <p class="text-xs text-blue-100/60">Kod turnieju</p>
+                <p class="my-1 font-mono text-3xl tracking-[0.3em] text-white">{tournament.join_code}</p>
+                <p class="text-xs break-all text-blue-100/50">{joinUrl}</p>
+              </div>
+            ) : (
+              <div class="mb-6 rounded-xl border border-purple-400/30 bg-purple-400/10 p-4 text-center">
+                <p class="text-sm text-purple-100">Turniej się rozpoczął. Dołączanie jest zamknięte.</p>
+                <p class="mt-1 text-xs text-purple-100/60">Parowanie graczy pojawi się w kolejnym kroku.</p>
+              </div>
+            )}
+
+            <p class="mb-4 text-xs text-blue-100/50">Rund w meczu: {tournament.rounds_per_match}</p>
+
+            <LobbyRoster
+              tournamentId={tournament.id}
+              currentUserId={user?.id ?? ""}
+              initialPlayers={players ?? []}
+              initialStatus={tournament.status}
+              client:load
+            />
+
+            <div class="mt-6 flex items-center justify-between gap-3">
+              <a href="/tournaments" class="text-sm text-purple-300 hover:underline">
+                ← Moje turnieje
+              </a>
+              {isCreator && tournament.status === "lobby" && (
+                <form method="POST" action={`/api/tournaments/${tournament.id}/start`}>
+                  <button
+                    type="submit"
+                    class="rounded-lg border border-purple-400/40 bg-purple-400/20 px-4 py-2 text-sm transition-colors hover:bg-purple-400/30"
+                  >
+                    Rozpocznij turniej
+                  </button>
+                </form>
+              )}
+              {!isCreator && tournament.status === "lobby" && (
+                <form method="POST" action={`/api/tournaments/${tournament.id}/leave`}>
+                  <button
+                    type="submit"
+                    class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
+                  >
+                    Opuść turniej
+                  </button>
+                </form>
+              )}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </div>
+</Layout>
