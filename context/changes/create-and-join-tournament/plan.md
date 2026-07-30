@@ -407,9 +407,9 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npx tsc --noEmit`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build succeeds: `npm run build`
+- [x] 4.1 Type checking passes: `npx tsc --noEmit` — f316c2b
+- [x] 4.2 Linting passes: `npm run lint` — f316c2b
+- [x] 4.3 Build succeeds: `npm run build` — f316c2b
 
 #### Manual
 
@@ -423,9 +423,9 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 5.2 Linting passes: `npm run lint`
-- [ ] 5.3 Build succeeds: `npm run build`
+- [x] 5.1 Type checking passes: `npx tsc --noEmit`
+- [x] 5.2 Linting passes: `npm run lint`
+- [x] 5.3 Build succeeds: `npm run build`
 
 #### Manual
 
