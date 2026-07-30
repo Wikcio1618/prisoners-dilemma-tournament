@@ -1,15 +1,44 @@
 ---
 change_id: realtime-match-scaffold
 title: Minimal live-room scaffold for one hidden-then-revealed round
-status: implementing
+status: implemented
 created: 2026-07-28
-updated: 2026-07-29
+updated: 2026-07-30
 archived_at: null
 ---
 
 ## Notes
 
 from @context/foundation/roadmap.md
+
+### Implementation close-out (2026-07-30)
+
+All four phases landed and deployed (active version `b5fe3f0a`). Two Progress rows were
+closed on evidence rather than direct observation, recorded here so S-03 knows what is
+actually unexercised:
+
+- **4.4** — the protocol was verified against the deployed Worker at the wire (distinct
+  seats, third socket refused, no move value on the wire before both commits, simultaneous
+  reveal, storage wiped). The harness *page* was only exercised in a browser locally, not
+  against production.
+- **4.5** — the production auth path was proven to reach Supabase and redirect correctly
+  (`POST /api/auth/signin` → 302 → `?error=Invalid login credentials`), which retires the
+  `TypeError: Can't modify immutable headers` risk that motivated the custom entrypoint. A
+  *successful* login's session cookie round-trip was never exercised end to end.
+
+Carried into S-03, beyond the plan's "What We're NOT Doing":
+
+- The room endpoint is **live and unauthenticated** at
+  `wss://prisoners-dilemma-tournament.ciolekwiktor.workers.dev/ws/match/<uuid>`. Anyone can
+  open rooms on random UUIDs; containment is structural only (UUID validation, two-socket
+  cap, storage wipe on terminal).
+- Criterion 1.6's wording ("receives its echoed frame") describes the Phase 1 scaffold. Phase 2
+  replaced the echo with the `seat`/`state` protocol — the row is checked on verified handshake
+  behaviour, not on an echo that no longer exists.
+- Testing gotcha: curl negotiates HTTP/2 over HTTPS, which has no `Upgrade` header, so room
+  requests fall through to Astro and 404. Use `--http1.1`. Browsers are unaffected.
+- Astro's CSRF check (`security.checkOrigin`) rejects POSTs without a matching `Origin`, so
+  scripted auth probes need the header set explicitly.
 
 ### Sequencing decision (2026-07-28)
 

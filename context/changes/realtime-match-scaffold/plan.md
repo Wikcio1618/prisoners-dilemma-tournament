@@ -387,6 +387,6 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 #### Manual
 
 - [x] 4.3 The `MatchRoom` namespace shows the SQLite storage backend, not KV — eede267
-- [ ] 4.4 The two-tab test passes against the deployed URL
-- [ ] 4.5 Existing production auth flows still work
+- [x] 4.4 The two-tab test passes against the deployed URL
+- [x] 4.5 Existing production auth flows still work
 - [x] 4.6 A malformed room id is rejected in production — eede267
