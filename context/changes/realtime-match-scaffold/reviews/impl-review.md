@@ -115,7 +115,7 @@ Verified, so it does not reappear as findings:
   - Tradeoff: Alarms are new machinery in a change scoped to isolate one unknown; the plan explicitly avoided timers.
   - Confidence: MEDIUM — straightforward, but untried in this codebase.
   - Blind spot: No measurement of actual accumulation; the risk is currently theoretical.
-- **Decision**: PENDING
+- **Decision**: FIXED — an `alarm()` reclaims any room whose round is still incomplete after 30 minutes; completed rounds are deliberately spared, since their stored moves are what keep the round terminal. Alarms API rather than `setTimeout`, which would defeat hibernation. Verified locally with a temporarily shortened TTL: abandoned room wiped (a new player gets a fresh seat a), completed round survived and still replays its reveal.
 
 ### F7 — Debug harness live on production as a ready-made client for the open endpoint
 
@@ -125,7 +125,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/pages/dev/match-room.astro:14
 - **Detail**: `export const prerender = false` with `output: "server"` makes `/dev/match-room` a live, unauthenticated production route, deliberately absent from `PROTECTED_ROUTES`. Its existence is not itself the vulnerability, but it removes all effort from exploiting the open socket: paste any room UUID into `?id=` and take a seat. The plan called it "a throwaway page kept off site navigation" — unlinked is not the same as unreachable.
 - **Fix**: Gate the route behind `import.meta.env.DEV` or return 404 in production.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — `/dev/match-room` stays reachable in production. It now requires a session to open a socket, and it is how the deployed room gets exercised. Revisit when S-03 ships the real match screen.
 
 ### F8 — No frame-size or rate guard; storage read precedes the short-circuit
 
@@ -135,7 +135,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/durable/match-room.ts:97,159
 - **Detail**: Every inbound message that parses and has a seat performs `await this.readMoves()` *before* the already-committed short-circuit at `:98`, so a seated socket can drive one billed storage read per frame. Frames up to 1 MiB reach `JSON.parse` with no length guard. The plan explicitly declined rate limiting, so this is scope-consistent — noted because it compounds F6 on an open endpoint.
 - **Fix**: Reject oversized frames before parsing and cache the seat's committed state as a fast-path reject, keeping storage authoritative for the completeness check.
-- **Decision**: PENDING
+- **Decision**: DEFERRED to S-03 — not exploitable anonymously now that sockets require a session, and rate limiting belongs with real traffic. A frame-size guard (1 KiB) did land as part of the F3 work.
 
 ### F9 — Zombie sockets hold seats; no opponent-left signal; `webSocketError` unguarded
 
@@ -145,7 +145,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/durable/match-room.ts:120-128
 - **Detail**: `webSocketClose` calling `ws.close()` is the documented pattern, but an abrupt network loss with no close frame leaves the socket enumerated until the runtime notices; during that window a reconnecting player gets 409. No message tells the surviving player their opponent left, and the harness has no retry by design, so they wait on a live socket indefinitely. `webSocketError` calls `close()` on an already-errored socket without a guard. Also, `freeSeat()` has no floor on socket count: if `seatOf()` ever returned `null` for a live socket, both seats would read free and a third socket could join on a duplicate seat — unreachable today, cheap to harden with `if (this.ctx.getWebSockets().length >= 2) return null;`.
 - **Fix**: Pass an explicit code/reason to `close()`, wrap both handlers, broadcast an `opponent-left` message, and add the socket-count floor.
-- **Decision**: PENDING
+- **Decision**: DEFERRED to S-03 — an opponent-left signal needs a real UI to display it, and the zombie-socket window is mitigated by latest-connection-wins seat takeover. The socket-count floor is moot now that seats resolve by identity rather than availability.
 
 ### F10 — Seat theft and room denial-of-service follow from the accepted no-auth decision
 

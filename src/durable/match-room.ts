@@ -38,6 +38,15 @@ const moveKey = (seat: Seat) => `move:${seat}`;
 const playerKey = (seat: Seat) => `player:${seat}`;
 
 /**
+ * How long a room may sit with an unfinished round before it is reclaimed.
+ *
+ * Generous relative to a single round in a live session, and only ever reached by rooms
+ * nobody came back to. Scheduled via the Alarms API rather than `setTimeout`, which would
+ * pin the object awake and defeat hibernation.
+ */
+const ABANDON_AFTER_MS = 30 * 60 * 1000;
+
+/**
  * A live room for one Prisoner's Dilemma round between two players.
  *
  * The room's whole purpose is one guarantee: neither player learns the other's move until
@@ -57,8 +66,8 @@ const playerKey = (seat: Seat) => `player:${seat}`;
  * Committed moves are NOT deleted once the round completes. Their presence is what makes the
  * round terminal — the already-committed guard reads them, and a seat holding one is not
  * free. An earlier version wiped storage on reveal, which reset the room instead of sealing
- * it and made rooms infinitely replayable. Because nothing reclaims that storage now, an
- * abandoned room retains one move indefinitely; an alarm-based TTL is the outstanding fix.
+ * it and made rooms infinitely replayable. Storage growth is bounded instead by the alarm
+ * below, which reclaims only rooms whose round was never finished.
  */
 export class MatchRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
@@ -111,6 +120,13 @@ export class MatchRoom extends DurableObject<Env> {
 
     if (players[seat] === undefined) {
       await this.ctx.storage.put(playerKey(seat), playerId);
+    }
+
+    // Scheduled after the seat is claimed so it adds no yield point ahead of the claim.
+    // Set once and left alone: the deadline is "this room has been idle since it was first
+    // used", not a sliding window, so a room cannot be kept alive indefinitely by reconnects.
+    if ((await this.ctx.storage.getAlarm()) === null) {
+      await this.ctx.storage.setAlarm(Date.now() + ABANDON_AFTER_MS);
     }
 
     this.send(server, { type: "seat", seat });
@@ -170,6 +186,26 @@ export class MatchRoom extends DurableObject<Env> {
     } else {
       this.broadcast({ type: "state", committed: this.committedFlags(moves) });
     }
+  }
+
+  /**
+   * Reclaims a room whose round was never finished.
+   *
+   * Completed rounds are deliberately left alone: their stored moves are what keep the round
+   * terminal, and wiping them would make the room replayable again — the exact defect that
+   * removing `deleteAll()` fixed. Only abandoned rounds are cleared, which is what bounds
+   * storage growth from rooms nobody returned to.
+   */
+  override async alarm(): Promise<void> {
+    const moves = await this.readMoves();
+    if (this.isComplete(moves)) {
+      return;
+    }
+    for (const ws of this.ctx.getWebSockets()) {
+      this.send(ws, { type: "error", reason: "Room expired before both players committed" });
+      this.closeQuietly(ws);
+    }
+    await this.ctx.storage.deleteAll();
   }
 
   override webSocketClose(ws: WebSocket): void {
