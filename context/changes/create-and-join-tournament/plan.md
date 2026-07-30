@@ -360,11 +360,11 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase db push --linked`
-- [x] 1.2 No pending migrations remain: `--dry-run`
-- [x] 1.3 Type checking passes: `npx tsc --noEmit`
-- [x] 1.4 Linting passes: `npm run lint`
-- [x] 1.5 Build succeeds: `npm run build`
+- [x] 1.1 Migration applies cleanly: `npx supabase db push --linked` — ef663a1
+- [x] 1.2 No pending migrations remain: `--dry-run` — ef663a1
+- [x] 1.3 Type checking passes: `npx tsc --noEmit` — ef663a1
+- [x] 1.4 Linting passes: `npm run lint` — ef663a1
+- [x] 1.5 Build succeeds: `npm run build` — ef663a1
 
 #### Manual
 
@@ -375,10 +375,10 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build succeeds: `npm run build`
-- [ ] 2.4 `/tournaments` is gated in `PROTECTED_ROUTES`
+- [x] 2.1 Type checking passes: `npx tsc --noEmit`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build succeeds: `npm run build`
+- [x] 2.4 `/tournaments` is gated in `PROTECTED_ROUTES`
 
 #### Manual
 
