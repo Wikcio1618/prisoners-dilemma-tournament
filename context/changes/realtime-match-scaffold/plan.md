@@ -340,9 +340,9 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [ ] 1.5 Every existing route still behaves as before under `npm run dev`
-- [ ] 1.6 A WebSocket client connecting to `/ws/match/<uuid>` receives its echoed frame
-- [ ] 1.7 A plain GET to `/ws/match/<uuid>` is not intercepted and 404s
+- [x] 1.5 Every existing route still behaves as before under `npm run dev`
+- [x] 1.6 A WebSocket client connecting to `/ws/match/<uuid>` receives its echoed frame
+- [x] 1.7 A plain GET to `/ws/match/<uuid>` is not intercepted and 404s
 
 ### Phase 2: Room protocol & hidden reveal
 
@@ -356,10 +356,10 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [ ] 2.6 A malformed room id is rejected with 400 and creates no object
-- [ ] 2.7 A third socket to an occupied room is rejected
-- [ ] 2.8 Two sockets on the same room id are assigned different seats
-- [ ] 2.9 Reloading one tab mid-round restores its own commit state without revealing the opponent's move
+- [x] 2.6 A malformed room id is rejected with 400 and creates no object
+- [x] 2.7 A third socket to an occupied room is rejected
+- [x] 2.8 Two sockets on the same room id are assigned different seats
+- [x] 2.9 Reloading one tab mid-round restores its own commit state without revealing the opponent's move
 
 ### Phase 3: Verification page & local two-tab test
 
@@ -381,12 +381,12 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [x] 4.1 CI completes with both jobs green
-- [x] 4.2 The deployment is live and current
+- [x] 4.1 CI completes with both jobs green — ba5d111
+- [x] 4.2 The deployment is live and current — ba5d111
 
 #### Manual
 
-- [ ] 4.3 The `MatchRoom` namespace shows the SQLite storage backend, not KV
+- [x] 4.3 The `MatchRoom` namespace shows the SQLite storage backend, not KV
 - [ ] 4.4 The two-tab test passes against the deployed URL
 - [ ] 4.5 Existing production auth flows still work
-- [ ] 4.6 A malformed room id is rejected in production
+- [x] 4.6 A malformed room id is rejected in production
