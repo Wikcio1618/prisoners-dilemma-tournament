@@ -375,10 +375,10 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx tsc --noEmit`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build succeeds: `npm run build`
-- [x] 2.4 `/tournaments` is gated in `PROTECTED_ROUTES`
+- [x] 2.1 Type checking passes: `npx tsc --noEmit` — 62c53c2
+- [x] 2.2 Linting passes: `npm run lint` — 62c53c2
+- [x] 2.3 Build succeeds: `npm run build` — 62c53c2
+- [x] 2.4 `/tournaments` is gated in `PROTECTED_ROUTES` — 62c53c2
 
 #### Manual
 
@@ -391,9 +391,9 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
+- [x] 3.1 Type checking passes: `npx tsc --noEmit`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
 
 #### Manual
 

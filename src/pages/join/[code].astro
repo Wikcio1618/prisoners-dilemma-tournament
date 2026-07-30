@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import JoinTournamentForm from "@/components/tournament/JoinTournamentForm";
+import { JOIN_CODE_PATTERN } from "@/lib/tournament";
+
+export const prerender = false;
+
+// The shareable link. Gated by PROTECTED_ROUTES, so a signed-out visitor is bounced to
+// sign-in with this path as `next` and lands back here afterwards — which is the whole
+// point of sharing a link rather than dictating a code.
+const { code } = Astro.params;
+const prefill = code && JOIN_CODE_PATTERN.test(code) ? code : "";
+const error = prefill ? null : "Ten link zawiera nieprawidłowy kod.";
+---
+
+<Layout title="Dołącz do turnieju">
+  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+      <h1
+        class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent"
+      >
+        Dołącz do turnieju
+      </h1>
+      <p class="mb-4 text-center text-sm text-blue-100/60">Zaproszono Cię do turnieju. Potwierdź, aby dołączyć.</p>
+      <JoinTournamentForm serverError={error} initialCode={prefill} client:load />
+    </div>
+  </div>
+</Layout>
