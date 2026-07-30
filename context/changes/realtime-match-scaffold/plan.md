@@ -371,11 +371,11 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [ ] 3.4 Two tabs on the same room id each show a distinct seat
-- [ ] 3.5 Committing in tab A leaves tab B's UI and raw message log free of any move value
-- [ ] 3.6 Committing in tab B reveals both moves in both tabs simultaneously
-- [ ] 3.7 Reloading a tab after one commit restores its own state without leaking the opponent's move
-- [ ] 3.8 The round is terminal — further commits change nothing
+- [x] 3.4 Two tabs on the same room id each show a distinct seat
+- [x] 3.5 Committing in tab A leaves tab B's UI and raw message log free of any move value
+- [x] 3.6 Committing in tab B reveals both moves in both tabs simultaneously
+- [x] 3.7 Reloading a tab after one commit restores its own state without leaking the opponent's move
+- [x] 3.8 The round is terminal — further commits change nothing
 
 ### Phase 4: Deploy & validate on Cloudflare
 
