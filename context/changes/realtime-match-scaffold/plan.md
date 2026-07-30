@@ -340,9 +340,9 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [x] 1.5 Every existing route still behaves as before under `npm run dev`
-- [x] 1.6 A WebSocket client connecting to `/ws/match/<uuid>` receives its echoed frame
-- [x] 1.7 A plain GET to `/ws/match/<uuid>` is not intercepted and 404s
+- [x] 1.5 Every existing route still behaves as before under `npm run dev` — eede267
+- [x] 1.6 A WebSocket client connecting to `/ws/match/<uuid>` receives its echoed frame — eede267
+- [x] 1.7 A plain GET to `/ws/match/<uuid>` is not intercepted and 404s — eede267
 
 ### Phase 2: Room protocol & hidden reveal
 
@@ -356,10 +356,10 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [x] 2.6 A malformed room id is rejected with 400 and creates no object
-- [x] 2.7 A third socket to an occupied room is rejected
-- [x] 2.8 Two sockets on the same room id are assigned different seats
-- [x] 2.9 Reloading one tab mid-round restores its own commit state without revealing the opponent's move
+- [x] 2.6 A malformed room id is rejected with 400 and creates no object — eede267
+- [x] 2.7 A third socket to an occupied room is rejected — eede267
+- [x] 2.8 Two sockets on the same room id are assigned different seats — eede267
+- [x] 2.9 Reloading one tab mid-round restores its own commit state without revealing the opponent's move — eede267
 
 ### Phase 3: Verification page & local two-tab test
 
@@ -386,7 +386,7 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Manual
 
-- [x] 4.3 The `MatchRoom` namespace shows the SQLite storage backend, not KV
+- [x] 4.3 The `MatchRoom` namespace shows the SQLite storage backend, not KV — eede267
 - [ ] 4.4 The two-tab test passes against the deployed URL
 - [ ] 4.5 Existing production auth flows still work
-- [x] 4.6 A malformed room id is rejected in production
+- [x] 4.6 A malformed room id is rejected in production — eede267
