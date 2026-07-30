@@ -365,9 +365,9 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [x] 3.1 Build succeeds with the new page: `npm run build`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 The page is not gated in `src/middleware.ts`
+- [x] 3.1 Build succeeds with the new page: `npm run build` — a7468f1
+- [x] 3.2 Linting passes: `npm run lint` — a7468f1
+- [x] 3.3 The page is not gated in `src/middleware.ts` — a7468f1
 
 #### Manual
 
@@ -381,8 +381,8 @@ Rollback is reverting `main` in `wrangler.jsonc` to `@astrojs/cloudflare/entrypo
 
 #### Automated
 
-- [ ] 4.1 CI completes with both jobs green
-- [ ] 4.2 The deployment is live and current
+- [x] 4.1 CI completes with both jobs green
+- [x] 4.2 The deployment is live and current
 
 #### Manual
 
