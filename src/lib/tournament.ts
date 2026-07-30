@@ -27,18 +27,38 @@ export const MAX_ROUNDS_PER_MATCH = 20;
 export const DEFAULT_ROUNDS_PER_MATCH = 10;
 
 /**
- * Format floor for a tournament's join code.
+ * Exact format of a tournament's join code: six digits.
  *
- * Unlike the round bounds above, this one *is* enforced in the database — the join code
- * is the sole credential for entering a tournament, so the constraint lives where it
- * cannot be bypassed. Mirrored by `tournaments_join_code_format`
- * (`supabase/migrations/20260729193142_join_code_format_and_match_player_indexes.sql`);
- * a code failing this pattern is rejected by the insert, not by this constant.
+ * Unlike the round bounds above, this one *is* enforced in the database — the join code is
+ * the sole credential for entering a tournament, so the constraint lives where it cannot be
+ * bypassed. Mirrored by `tournaments_join_code_format`
+ * (`supabase/migrations/20260730203114_join_code_six_digits.sql`); a code failing this
+ * pattern is rejected by the insert, not by this constant.
  */
-export const JOIN_CODE_PATTERN = /^[A-Z0-9]{8,}$/;
+export const JOIN_CODE_PATTERN = /^[0-9]{6}$/;
 
-/** Length used when generating a new join code. The database enforces only the minimum. */
-export const JOIN_CODE_LENGTH = 8;
+/** Number of digits in a generated join code. */
+export const JOIN_CODE_LENGTH = 6;
+
+/**
+ * Generates a join code.
+ *
+ * Returns a *string* with leading zeros preserved — `004821` is a valid code, and deriving it
+ * from a number would silently produce a five-character value the database then rejects.
+ *
+ * Uses `crypto.getRandomValues` rather than `Math.random`: this value is the only credential
+ * guarding entry to a tournament, and the keyspace is just 10^6, so predictable output would
+ * make guessing trivial rather than merely feasible. Callers must still handle collisions —
+ * `join_code` is globally unique, so an insert can fail with SQLSTATE 23505 and should be
+ * retried with a fresh code.
+ */
+export function generateJoinCode(): string {
+  const digits = new Uint8Array(JOIN_CODE_LENGTH);
+  crypto.getRandomValues(digits);
+  // Modulo 10 over a byte is very slightly biased toward 0-5; irrelevant for a join code,
+  // and not worth rejection sampling here.
+  return Array.from(digits, (byte) => (byte % 10).toString()).join("");
+}
 
 /**
  * Why a `join_tournament` call was rejected.
