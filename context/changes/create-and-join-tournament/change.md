@@ -1,7 +1,7 @@
 ---
 change_id: create-and-join-tournament
 title: Player creates a tournament and others join via code
-status: implementing
+status: impl_reviewed
 created: 2026-07-30
 updated: 2026-07-30
 archived_at: null
