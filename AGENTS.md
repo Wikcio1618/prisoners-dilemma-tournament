@@ -39,3 +39,5 @@ TypeScript strict mode (`astro/tsconfigs/strict`); path alias `@/*` → `./src/*
 ## Security & Configuration
 
 `SUPABASE_URL`/`SUPABASE_KEY` are server-only secrets declared via `astro:env` in `@astro.config.mjs` — never exposed to the client. Copy `@.env.example` to `.env` for local Node and to `.dev.vars` for Cloudflare local dev (both gitignored).
+
+Auth URL configuration (Site URL, redirect allow-list, email confirmation) for the linked project lives in the **Supabase dashboard**, not in `@supabase/config.toml` — that file configures the local Docker stack. Do not run `supabase config push` casually: it overwrites the remote's entire `[auth]` block from local defaults, which have historically included a localhost `site_url` and `enable_confirmations = false`.
