@@ -1,20 +1,30 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { START_TOURNAMENT_ERRORS, isStartTournamentError } from "@/lib/tournament";
 
 export const prerender = false;
 
 /**
- * Closes the join window by moving the tournament from lobby to started.
+ * Starts a tournament: closes the join window and generates the round-robin schedule.
  *
- * Authorisation is entirely the UPDATE policy plus its column-level grant: creator-only,
- * `lobby → started` only, and `status` is the only column `authenticated` may write. The UI
- * hides this control from non-creators, but hiding a button is not access control — the
- * policy is what actually enforces it, and that is what the manual test exercises.
+ * Both happen inside `public.start_tournament()`, in one transaction, because starting is a
+ * one-way door — once `started`, no policy permits leaving, reverting or deleting, so a
+ * tournament that reached `started` without a schedule would be permanently bricked.
  *
- * Because `USING` requires `lobby`, starting an already-started tournament matches zero rows
- * rather than erroring. That is treated as success: the join window is shut either way, which
- * is what the caller asked for.
+ * Authorisation lives in the function, not in a policy: the UPDATE policy was dropped and
+ * `update (status)` revoked, so this RPC is the only route to `started`. The route therefore
+ * does no re-check of its own — the function owns it, and the earlier rows-affected
+ * inspection this route used to do is gone with the policy it was inspecting.
  */
+const MESSAGES: Record<string, string> = {
+  [START_TOURNAMENT_ERRORS.NOT_AUTHENTICATED]: "Zaloguj się, aby rozpocząć turniej.",
+  // Same message for absent and not-yours, matching the function's deliberate use of one
+  // token for both — telling them apart would make this an existence oracle.
+  [START_TOURNAMENT_ERRORS.NOT_FOUND]: "Nie znaleziono turnieju.",
+  [START_TOURNAMENT_ERRORS.FINISHED]: "Ten turniej jest już zakończony.",
+  [START_TOURNAMENT_ERRORS.NOT_ENOUGH_PLAYERS]: "Do rozpoczęcia turnieju potrzeba co najmniej dwóch graczy.",
+};
+
 export const POST: APIRoute = async (context) => {
   const supabase = createClient(context.request.headers, context.cookies);
   const id = context.params.id;
@@ -22,32 +32,17 @@ export const POST: APIRoute = async (context) => {
     return context.redirect("/tournaments");
   }
 
-  // `.select()` is what makes rows-affected observable. Without it every outcome — refused by
-  // the policy, already started, tournament absent, genuine success — collapses into the same
-  // silent redirect, and a policy regression would be invisible. That is the failure mode this
-  // whole slice exists to guard against, so the route looks rather than assumes.
-  const { data: started, error } = await supabase
-    .from("tournaments")
-    .update({ status: "started" })
-    .eq("id", id)
-    .select("id");
+  const { error } = await supabase.rpc("start_tournament", { p_tournament_id: id });
 
   if (error) {
-    const message = "Nie udało się rozpocząć turnieju.";
+    // Read the reason from `details`, never `message` — the latter is English prose from
+    // Postgres and may be reworded or translated.
+    const reason = isStartTournamentError(error.details) ? MESSAGES[error.details] : undefined;
+    const message = reason ?? "Nie udało się rozpocząć turnieju.";
     return context.redirect(`/tournaments/${id}?error=${encodeURIComponent(message)}`);
   }
 
-  if (started.length === 0) {
-    // Either the tournament is already started — in which case the join window is shut and the
-    // caller got what they wanted — or the policy refused them. Distinguished by re-reading:
-    // a non-creator sees the row (the SELECT policy allows members) but did not change it.
-    const { data: current } = await supabase.from("tournaments").select("status").eq("id", id).maybeSingle();
-
-    if (current?.status !== "started") {
-      const message = "Nie masz uprawnień, aby rozpocząć ten turniej.";
-      return context.redirect(`/tournaments/${id}?error=${encodeURIComponent(message)}`);
-    }
-  }
-
+  // A repeated start returns the existing match count rather than erroring, so success here
+  // covers both the first press and a retry after a lost response.
   return context.redirect(`/tournaments/${id}`);
 };

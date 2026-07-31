@@ -84,3 +84,29 @@ export type JoinTournamentError = (typeof JOIN_TOURNAMENT_ERRORS)[keyof typeof J
 export function isJoinTournamentError(details: unknown): details is JoinTournamentError {
   return typeof details === "string" && (Object.values(JOIN_TOURNAMENT_ERRORS) as string[]).includes(details);
 }
+
+/**
+ * Why a `start_tournament` call was rejected.
+ *
+ * Same contract as the join tokens above: read from `error.details`, never `error.message`.
+ *
+ * `NOT_FOUND` is raised both when the tournament does not exist and when the caller is not its
+ * creator. That is deliberate — distinguishing them would turn the function into an existence
+ * oracle for tournament ids — so callers must not infer "it exists but isn't yours" from it.
+ *
+ * Mirrored by `public.start_tournament()`
+ * (`supabase/migrations/20260731174617_pairing_schema.sql`).
+ */
+export const START_TOURNAMENT_ERRORS = {
+  NOT_AUTHENTICATED: "not_authenticated",
+  NOT_FOUND: "tournament_not_found",
+  FINISHED: "tournament_finished",
+  NOT_ENOUGH_PLAYERS: "not_enough_players",
+} as const;
+
+export type StartTournamentError = (typeof START_TOURNAMENT_ERRORS)[keyof typeof START_TOURNAMENT_ERRORS];
+
+/** Narrows a Supabase error's `details` field to a known start failure reason. */
+export function isStartTournamentError(details: unknown): details is StartTournamentError {
+  return typeof details === "string" && (Object.values(START_TOURNAMENT_ERRORS) as string[]).includes(details);
+}

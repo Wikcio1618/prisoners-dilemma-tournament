@@ -356,29 +356,29 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Manual
 
-- [ ] 1.7 A 4-player tournament creates exactly 6 matches, each pair once
-- [ ] 1.8 Every player appears in exactly 3 matches, none paired with themselves
-- [ ] 1.9 Round numbers form 3 rounds of 2 with no player twice in a round
-- [ ] 1.10 A 1-player start is refused with `not_enough_players`, status stays lobby
-- [ ] 1.11 A non-creator start returns `tournament_not_found` and changes nothing
-- [ ] 1.12 Calling start twice returns the same count and creates no duplicates
-- [ ] 1.13 A direct PATCH setting status to started affects zero rows
+- [x] 1.7 A 4-player tournament creates exactly 6 matches, each pair once
+- [x] 1.8 Every player appears in exactly 3 matches, none paired with themselves
+- [x] 1.9 Round numbers form 3 rounds of 2 with no player twice in a round
+- [x] 1.10 A 1-player start is refused with `not_enough_players`, status stays lobby
+- [x] 1.11 A non-creator start returns `tournament_not_found` and changes nothing
+- [x] 1.12 Calling start twice returns the same count and creates no duplicates
+- [x] 1.13 A direct PATCH setting status to started affects zero rows
 
 ### Phase 2: Wire the start route
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build succeeds: `npm run build`
-- [ ] 2.4 The route no longer updates the tournaments table directly
+- [x] 2.1 Type checking passes: `npx tsc --noEmit`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build succeeds: `npm run build`
+- [x] 2.4 The route no longer updates the tournaments table directly
 
 #### Manual
 
-- [ ] 2.5 The creator starts from the UI and matches are created
-- [ ] 2.6 Starting with one player shows a Polish message; status stays lobby
-- [ ] 2.7 A non-creator's start POST shows a Polish message and changes nothing
-- [ ] 2.8 Pressing start twice is harmless
+- [x] 2.5 The creator starts from the UI and matches are created
+- [x] 2.6 Starting with one player shows a Polish message; status stays lobby
+- [x] 2.7 A non-creator's start POST shows a Polish message and changes nothing
+- [x] 2.8 Pressing start twice is harmless
 
 ### Phase 3: Player identity
 
