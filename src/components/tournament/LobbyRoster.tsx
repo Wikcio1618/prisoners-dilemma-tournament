@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Users } from "lucide-react";
 import { MAX_PLAYERS_PER_TOURNAMENT } from "@/lib/tournament";
 
@@ -17,6 +17,9 @@ interface Props {
 /** How often to re-fetch the roster while the tournament is still in lobby. */
 const POLL_MS = 4000;
 
+/** Consecutive transient failures tolerated before the poll gives up and says so. */
+const MAX_FAILURES = 3;
+
 /**
  * Roster that fills as players join.
  *
@@ -30,9 +33,11 @@ const POLL_MS = 4000;
 export default function LobbyRoster({ tournamentId, currentUserId, initialPlayers, initialStatus }: Props) {
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [status, setStatus] = useState(initialStatus);
+  const [lost, setLost] = useState(false);
+  const failures = useRef(0);
 
   useEffect(() => {
-    if (status !== "lobby") return;
+    if (status !== "lobby" || lost) return;
 
     // AbortController rather than a cancelled flag: unmounting aborts the request in flight,
     // so no response can arrive after cleanup and there is no state update to guard against.
@@ -45,7 +50,19 @@ export default function LobbyRoster({ tournamentId, currentUserId, initialPlayer
             headers: { Accept: "application/json" },
             signal: controller.signal,
           });
-          if (!res.ok) return;
+          if (res.status === 401 || res.status === 403 || res.status === 404) {
+            // Terminal: the session expired, or this caller is no longer a member (they left
+            // in another tab). Retrying cannot recover either, and an unattended tab would
+            // otherwise poll a dead endpoint every few seconds indefinitely.
+            setLost(true);
+            return;
+          }
+          if (!res.ok) {
+            failures.current += 1;
+            if (failures.current >= MAX_FAILURES) setLost(true);
+            return;
+          }
+          failures.current = 0;
           const body: { status: string; players: Player[] } = await res.json();
           setPlayers(body.players);
           setStatus(body.status);
@@ -60,7 +77,7 @@ export default function LobbyRoster({ tournamentId, currentUserId, initialPlayer
       controller.abort();
       clearInterval(timer);
     };
-  }, [tournamentId, status]);
+  }, [tournamentId, status, lost]);
 
   return (
     <div>
@@ -79,6 +96,7 @@ export default function LobbyRoster({ tournamentId, currentUserId, initialPlayer
           </li>
         ))}
       </ul>
+      {lost ? <p className="mt-3 text-xs text-amber-300">Utracono połączenie z poczekalnią. Odśwież stronę.</p> : null}
       {players.length < 2 ? (
         <p className="mt-3 text-xs text-blue-100/50">Potrzeba co najmniej dwóch graczy, aby turniej miał sens.</p>
       ) : null}

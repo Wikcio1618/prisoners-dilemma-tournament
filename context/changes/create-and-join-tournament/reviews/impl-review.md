@@ -64,7 +64,7 @@ Verified, so it does not reappear as findings:
   - Tradeoff: Undoes a deliberate product decision about codes being read aloud in a noisy room, and does nothing about the missing kick path.
   - Confidence: HIGH — it is the state the schema was in yesterday.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — risk accepted for a camp-scale app: no realistic attacker is scripting a youth-camp tournament, and the 6-digit code was chosen deliberately so it can be read aloud in a noisy room. Recorded rather than mitigated. Revisit before any wider audience: the mitigations remain a per-user throttle on the join path plus a creator-kick so a polluted lobby is recoverable.
 
 ### F3 — Unbounded creation permanently exhausts the global join-code space
 
@@ -78,7 +78,7 @@ Verified, so it does not reappear as findings:
   - Tradeoff: A reaper is new machinery and needs a staleness definition nobody has chosen yet.
   - Confidence: MED — the cap is easy; the reclamation policy is a real design question.
   - Blind spot: No data on realistic tournament volume, so the cap threshold would be a guess.
-- **Decision**: PENDING
+- **Decision**: DEFERRED — recoverable by deleting rows in the dashboard, and requires sustained abuse (~10^6 authenticated requests). Same root as F2 (no rate limiting); revisit together.
 
 ### F4 — The creator can leave, then start a tournament with zero players
 
@@ -88,7 +88,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/pages/api/tournaments/[id]/leave.ts:30-35
 - **Detail**: The DELETE policy is self-only-in-lobby, and the creator's own membership row satisfies it. `[id].astro:101` only *hides* the button. **Confirmed on production**: two POSTs — leave, then start — produced a `started` tournament with `creator_id` set and **0 players**. That is exactly the orphan state the create route's rollback at `index.ts:73` exists to prevent, reachable by a different route. S-02's pairing would inherit it.
 - **Fix**: Exclude the creator in the DELETE policy, or make a creator leaving delete the tournament. Hiding the button is not enforcement — the same lesson F-01's review produced about the start button.
-- **Decision**: PENDING
+- **Decision**: FIXED — `20260731163754_creator_cannot_leave_own_tournament.sql` excludes the creator from the self-leave policy. A creator wanting rid of their tournament deletes the tournament itself, which the creator-delete policy already permits in lobby.
 
 ### F5 — The orphan rollback discards its result and can leave the user told the opposite of the truth
 
@@ -98,7 +98,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/pages/api/tournaments/index.ts:73
 - **Detail**: `await supabase.from("tournaments").delete().eq("id", tournamentId)` inspects neither error nor rows affected. If the delete fails — most plausibly the same transient condition that just broke the RPC — the tournament survives with zero members, appears in the creator's list, renders a join code, and is startable, while the user is told creation failed. The plan's "handle that failure explicitly" is satisfied in the surfacing branch, but the compensating action is attempted rather than verified.
 - **Fix**: Add `.select("id")` and branch on the result; on failure surface a message naming the tournament id so the state is recoverable. The real fix is a `create_tournament` definer function making insert-plus-enrol one transaction.
-- **Decision**: PENDING
+- **Decision**: FIXED — the rollback delete now uses `.select("id")` and checks both error and rows affected; a failed undo surfaces a distinct message telling the user the tournament exists and is on their list, rather than claiming creation failed.
 
 ### F6 — The lobby poll never stops on a persistent 404 or 500
 
@@ -108,7 +108,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/components/tournament/LobbyRoster.tsx:48
 - **Detail**: `if (!res.ok) return;` swallows the failure and the interval keeps firing. After a member leaves in another tab, or their session expires, the endpoint returns 404 on every poll and the tab keeps requesting every 4s indefinitely — ~900 requests/hour/tab with no backoff and no user-visible signal. Compounds F2's absence of rate limiting.
 - **Fix**: Treat 401/404 as terminal immediately, count consecutive failures otherwise, and render a "connection lost / refresh" state after a few.
-- **Decision**: PENDING
+- **Decision**: FIXED — 401/403/404 are terminal immediately, other failures tolerated up to 3 consecutive before the poll stops; a Polish 'connection lost, refresh' line renders when it does.
 
 ### F7 — start reports success when the policy refused, and has no auth guard
 
@@ -127,7 +127,7 @@ Verified, so it does not reappear as findings:
   - Tradeoff: A policy regression would be invisible, which is the failure mode this whole slice was meant to guard against.
   - Confidence: HIGH — behaviour verified.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: FIXED via Fix A — `.select("id")` on the update, and a zero-row result re-reads the status to distinguish already-started (idempotent success) from a policy refusal, which now surfaces a permissions message.
 
 ### F8 — Attacker-controlled prose renders inside the app's own error banner
 
@@ -146,7 +146,7 @@ Verified, so it does not reappear as findings:
   - Tradeoff: Leaves a phishing primitive that F1 makes materially more useful.
   - Confidence: HIGH.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: DEFERRED — the error-key refactor touches every route and page that passes or renders a message, and the existing auth routes pass Supabase prose the same way. Worth doing as one consistent pass rather than piecemeal.
 
 ### F9 — Submit buttons never disable, so double-submit creates two tournaments
 
@@ -156,7 +156,7 @@ Verified, so it does not reappear as findings:
 - **Location**: src/components/auth/SubmitButton.tsx:12
 - **Detail**: Every form uses a *string* action, so React's `useFormStatus` pending never becomes true — `startHostTransition` only runs for function actions or prevented-default transitions. The button is never disabled and `pendingText` never renders. On the create form a double-click produces two POSTs, two tournaments and two burned join codes, with the user landing on only one and an orphan left in their list. Dead code in all four forms; most damaging on create.
 - **Fix**: Disable on submit with local state in each form's `onSubmit`, since the framework cannot help with a string action.
-- **Decision**: PENDING
+- **Decision**: FIXED — SubmitButton now listens for a non-prevented submit on its own owning form (via HTMLButtonElement.form, so multiple forms cannot cross wires) and disables. useFormStatus never fired because every form uses a string action.
 
 ### F10 — Consolidated smaller issues
 
@@ -166,4 +166,4 @@ Verified, so it does not reappear as findings:
 - **Location**: multiple
 - **Detail**: (a) **Stale lobby chrome** — `LobbyRoster` stops polling on the start transition, but the join-code panel, start button and leave button are server-rendered from the initial status and never update, so a member whose creator started elsewhere keeps seeing a join code and a leave button that then fails. (b) **`leave.ts:34` contradicts its own comment** — the route filters `.eq("user_id", user.id)` while its docstring and the plan both say authorisation is left entirely to the policy; harmless but it is the masking pattern the plan forbade. (c) **The `NOT_AUTHENTICATED` mapping in `join.ts:19` is unreachable** — an anon caller is refused by `revoke execute` with 42501 before the function's own token can be raised, so an expired session shows the generic message. (d) **`players.ts:36` selects `join_code`** — the credential — and never uses it; one careless spread away from publishing it on a 4-second poll. (e) **No logging anywhere** — every error branch swallows its cause, leaving no forensic trace in production. (f) **The plan's "copyable link" was not built** — the URL renders as inert text. (g) **Four different auth strategies across five new routes** — `getUser()`, RLS-only, and RPC-error-only.
 - **Fix**: Take (a), (c) and (d) as small targeted edits; fold (b) and (g) into a stated convention; treat (e) as a project-level decision; (f) is a one-line UI addition.
-- **Decision**: PENDING
+- **Decision**: DEFERRED — recorded for follow-up: stale lobby chrome after a poll-detected start, leave.ts contradicting its own comment, the unreachable NOT_AUTHENTICATED mapping, join_code in the roster select, absent logging, the uncopyable link, and the four auth strategies across five routes.

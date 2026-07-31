@@ -22,11 +22,31 @@ export const POST: APIRoute = async (context) => {
     return context.redirect("/tournaments");
   }
 
-  const { error } = await supabase.from("tournaments").update({ status: "started" }).eq("id", id);
+  // `.select()` is what makes rows-affected observable. Without it every outcome — refused by
+  // the policy, already started, tournament absent, genuine success — collapses into the same
+  // silent redirect, and a policy regression would be invisible. That is the failure mode this
+  // whole slice exists to guard against, so the route looks rather than assumes.
+  const { data: started, error } = await supabase
+    .from("tournaments")
+    .update({ status: "started" })
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     const message = "Nie udało się rozpocząć turnieju.";
     return context.redirect(`/tournaments/${id}?error=${encodeURIComponent(message)}`);
+  }
+
+  if (started.length === 0) {
+    // Either the tournament is already started — in which case the join window is shut and the
+    // caller got what they wanted — or the policy refused them. Distinguished by re-reading:
+    // a non-creator sees the row (the SELECT policy allows members) but did not change it.
+    const { data: current } = await supabase.from("tournaments").select("status").eq("id", id).maybeSingle();
+
+    if (current?.status !== "started") {
+      const message = "Nie masz uprawnień, aby rozpocząć ten turniej.";
+      return context.redirect(`/tournaments/${id}?error=${encodeURIComponent(message)}`);
+    }
   }
 
   return context.redirect(`/tournaments/${id}`);
