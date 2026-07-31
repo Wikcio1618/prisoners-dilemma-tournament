@@ -384,20 +384,20 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Automated
 
-- [ ] 3.1 Migration applies cleanly: `npx supabase db push --linked`
-- [ ] 3.2 No pending migrations remain: `--dry-run`
-- [ ] 3.3 Types regenerate with `profiles`
-- [ ] 3.4 Type checking passes: `npx tsc --noEmit`
-- [ ] 3.5 Linting passes: `npm run lint`
-- [ ] 3.6 Build succeeds: `npm run build`
+- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked`
+- [x] 3.2 No pending migrations remain: `--dry-run`
+- [x] 3.3 Types regenerate with `profiles`
+- [x] 3.4 Type checking passes: `npx tsc --noEmit`
+- [x] 3.5 Linting passes: `npm run lint`
+- [x] 3.6 Build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 3.7 A new signup with a display name produces a matching `profiles` row
-- [ ] 3.8 Pre-existing accounts are backfilled, and no row contains an email address
-- [ ] 3.9 A player can read the profile of someone in their tournament
-- [ ] 3.10 A player cannot read the profile of an unrelated account
-- [ ] 3.11 The lobby roster shows names instead of truncated UUIDs
+- [x] 3.7 A new signup with a display name produces a matching `profiles` row
+- [x] 3.8 Pre-existing accounts are backfilled, and no row contains an email address
+- [x] 3.9 A player can read the profile of someone in their tournament
+- [x] 3.10 A player cannot read the profile of an unrelated account
+- [x] 3.11 The lobby roster shows names instead of truncated UUIDs
 
 ### Phase 4: Opponent view
 

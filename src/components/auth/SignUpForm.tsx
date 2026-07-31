@@ -1,26 +1,39 @@
 import React, { useState } from "react";
-import { Mail, Lock, UserPlus } from "lucide-react";
+import { Mail, Lock, UserPlus, User } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
 
 const MIN_PASSWORD_LENGTH = 6;
+const MAX_DISPLAY_NAME_LENGTH = 40;
 
 interface Props {
   serverError?: string | null;
 }
 
 export default function SignUpForm({ serverError }: Props) {
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{
+    displayName?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
 
   function validate() {
     const next: typeof errors = {};
+
+    if (!displayName.trim()) {
+      next.displayName = "Display name is required";
+    } else if (displayName.trim().length > MAX_DISPLAY_NAME_LENGTH) {
+      next.displayName = `Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or fewer`;
+    }
 
     if (!email.trim()) {
       next.email = "Email is required";
@@ -64,6 +77,24 @@ export default function SignUpForm({ serverError }: Props) {
 
   return (
     <form method="POST" action="/api/auth/signup" className="space-y-4" onSubmit={handleSubmit} noValidate>
+      <FormField
+        id="display_name"
+        label="Display name"
+        value={displayName}
+        onChange={(v) => {
+          setDisplayName(v);
+          clearError("displayName");
+        }}
+        placeholder="How other players will see you"
+        error={errors.displayName}
+        icon={<User className="size-4" />}
+        hint={
+          !errors.displayName ? (
+            <p className="mt-1 text-xs text-blue-100/50">Visible to players in your tournaments. Not your email.</p>
+          ) : undefined
+        }
+      />
+
       <FormField
         id="email"
         type="email"

@@ -5,6 +5,8 @@ import { MAX_PLAYERS_PER_TOURNAMENT } from "@/lib/tournament";
 interface Player {
   user_id: string;
   joined_at: string;
+  /** Null only if the profile row is missing, which the trigger should make impossible. */
+  display_name: string | null;
 }
 
 interface Props {
@@ -91,7 +93,7 @@ export default function LobbyRoster({ tournamentId, currentUserId, initialPlayer
             key={p.user_id}
             className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
           >
-            <span className="font-mono text-xs text-blue-100/70">{p.user_id.slice(0, 8)}</span>
+            <span className="text-blue-100/90">{p.display_name ?? p.user_id.slice(0, 8)}</span>
             {p.user_id === currentUserId ? <span className="text-xs text-purple-300">to Ty</span> : null}
           </li>
         ))}

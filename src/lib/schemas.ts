@@ -24,5 +24,10 @@ export const joinTournamentSchema = z.object({
   join_code: z.string().trim().regex(JOIN_CODE_PATTERN),
 });
 
+/** `POST /api/auth/signup` — the display-name field only; email/password keep their existing handling. */
+export const signUpProfileSchema = z.object({
+  display_name: z.string().trim().min(1).max(40),
+});
+
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;
 export type JoinTournamentInput = z.infer<typeof joinTournamentSchema>;

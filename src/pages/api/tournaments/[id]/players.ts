@@ -50,11 +50,26 @@ export const GET: APIRoute = async (context) => {
     .eq("tournament_id", id)
     .order("joined_at", { ascending: true });
 
+  const roster = players ?? [];
+
+  // Two queries rather than an embed: tournament_players.user_id references auth.users, not
+  // profiles, so PostgREST has no relationship to traverse. The profiles read is scoped by its
+  // own co-member policy, which covers exactly this roster.
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in(
+      "id",
+      roster.map((p) => p.user_id),
+    );
+
+  const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+
   return new Response(
     JSON.stringify({
       status: tournament.status,
       creator_id: tournament.creator_id,
-      players: players ?? [],
+      players: roster.map((p) => ({ ...p, display_name: names.get(p.user_id) ?? null })),
     }),
     {
       status: 200,

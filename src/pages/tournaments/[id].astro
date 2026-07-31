@@ -34,6 +34,20 @@ const { data: players } =
         .order("joined_at", { ascending: true })
     : { data: [] };
 
+const roster = players ?? [];
+const { data: rosterProfiles } =
+  roster.length > 0 && supabase
+    ? await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in(
+          "id",
+          roster.map((p) => p.user_id),
+        )
+    : { data: [] };
+const nameById = new Map((rosterProfiles ?? []).map((p) => [p.id, p.display_name]));
+const initialPlayers = roster.map((p) => ({ ...p, display_name: nameById.get(p.user_id) ?? null }));
+
 const joinUrl = tournament ? new URL(`/join/${tournament.join_code}`, Astro.url.origin).toString() : "";
 const isCreator = tournament?.creator_id === user?.id;
 const error = Astro.url.searchParams.get("error");
@@ -79,7 +93,7 @@ const error = Astro.url.searchParams.get("error");
             <LobbyRoster
               tournamentId={tournament.id}
               currentUserId={user?.id ?? ""}
-              initialPlayers={players ?? []}
+              initialPlayers={initialPlayers}
               initialStatus={tournament.status}
               client:load
             />
