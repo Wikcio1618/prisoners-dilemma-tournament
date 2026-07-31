@@ -20,6 +20,7 @@ export type Database = {
           id: string
           player_a_id: string
           player_b_id: string
+          round_number: number
           status: string
           tournament_id: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           player_a_id: string
           player_b_id: string
+          round_number: number
           status?: string
           tournament_id: string
         }
@@ -36,10 +38,25 @@ export type Database = {
           id?: string
           player_a_id?: string
           player_b_id?: string
+          round_number?: number
           status?: string
           tournament_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_player_a_is_member"
+            columns: ["tournament_id", "player_a_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_players"
+            referencedColumns: ["tournament_id", "user_id"]
+          },
+          {
+            foreignKeyName: "matches_player_b_is_member"
+            columns: ["tournament_id", "player_b_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_players"
+            referencedColumns: ["tournament_id", "user_id"]
+          },
           {
             foreignKeyName: "matches_tournament_id_fkey"
             columns: ["tournament_id"]
@@ -108,6 +125,7 @@ export type Database = {
     }
     Functions: {
       join_tournament: { Args: { p_join_code: string }; Returns: string }
+      start_tournament: { Args: { p_tournament_id: string }; Returns: number }
     }
     Enums: {
       tournament_status: "lobby" | "started" | "finished"
