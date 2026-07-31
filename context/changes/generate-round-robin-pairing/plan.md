@@ -347,12 +347,12 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase db push --linked`
-- [x] 1.2 No pending migrations remain: `--dry-run`
-- [x] 1.3 Types regenerate and expose `start_tournament`
-- [x] 1.4 Type checking passes: `npx tsc --noEmit`
-- [x] 1.5 Linting passes: `npm run lint`
-- [x] 1.6 Build succeeds: `npm run build`
+- [x] 1.1 Migration applies cleanly: `npx supabase db push --linked` — fe9db0d
+- [x] 1.2 No pending migrations remain: `--dry-run` — fe9db0d
+- [x] 1.3 Types regenerate and expose `start_tournament` — fe9db0d
+- [x] 1.4 Type checking passes: `npx tsc --noEmit` — fe9db0d
+- [x] 1.5 Linting passes: `npm run lint` — fe9db0d
+- [x] 1.6 Build succeeds: `npm run build` — fe9db0d
 
 #### Manual
 
