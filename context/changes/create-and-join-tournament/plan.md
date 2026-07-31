@@ -368,7 +368,7 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 
 #### Manual
 
-- [x] 1.6 6-digit code accepted; 5-digit and 8-char alphanumeric rejected
+- [x] 1.6 6-digit code accepted; 5-digit and 8-char alphanumeric rejected — be2d19f
 - [x] 1.7 Generator preserves leading zeros — 2511866
 
 ### Phase 2: Create a tournament
@@ -430,7 +430,7 @@ One migration, narrowing the `join_code` CHECK. The table is empty so it validat
 #### Manual
 
 - [x] 5.4 A member leaving disappears from the other player's roster — 2511866
-- [x] 5.5 The creator sees no leave control; a non-creator sees no start control
+- [x] 5.5 The creator sees no leave control; a non-creator sees no start control — be2d19f
 - [x] 5.6 After start, a further join with the same code is rejected as already-started — 2511866
 - [x] 5.7 Pressing start twice reports already-started rather than erroring — 2511866
 - [x] 5.8 A hand-crafted start POST from a non-creator does not change the status — 2511866
