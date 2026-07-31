@@ -384,20 +384,20 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Automated
 
-- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked`
-- [x] 3.2 No pending migrations remain: `--dry-run`
-- [x] 3.3 Types regenerate with `profiles`
-- [x] 3.4 Type checking passes: `npx tsc --noEmit`
-- [x] 3.5 Linting passes: `npm run lint`
-- [x] 3.6 Build succeeds: `npm run build`
+- [x] 3.1 Migration applies cleanly: `npx supabase db push --linked` — a315659
+- [x] 3.2 No pending migrations remain: `--dry-run` — a315659
+- [x] 3.3 Types regenerate with `profiles` — a315659
+- [x] 3.4 Type checking passes: `npx tsc --noEmit` — a315659
+- [x] 3.5 Linting passes: `npm run lint` — a315659
+- [x] 3.6 Build succeeds: `npm run build` — a315659
 
 #### Manual
 
-- [x] 3.7 A new signup with a display name produces a matching `profiles` row
-- [x] 3.8 Pre-existing accounts are backfilled, and no row contains an email address
-- [x] 3.9 A player can read the profile of someone in their tournament
-- [x] 3.10 A player cannot read the profile of an unrelated account
-- [x] 3.11 The lobby roster shows names instead of truncated UUIDs
+- [x] 3.7 A new signup with a display name produces a matching `profiles` row — a315659
+- [x] 3.8 Pre-existing accounts are backfilled, and no row contains an email address — a315659
+- [x] 3.9 A player can read the profile of someone in their tournament — a315659
+- [x] 3.10 A player cannot read the profile of an unrelated account — a315659
+- [x] 3.11 The lobby roster shows names instead of truncated UUIDs — a315659
 
 ### Phase 4: Opponent view
 
