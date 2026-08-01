@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { JOIN_CODE_PATTERN, MAX_ROUNDS_PER_MATCH, MIN_ROUNDS_PER_MATCH } from "@/lib/tournament";
+import {
+  JOIN_CODE_PATTERN,
+  MAX_DISPLAY_NAME_LENGTH,
+  MAX_ROUNDS_PER_MATCH,
+  MIN_ROUNDS_PER_MATCH,
+} from "@/lib/tournament";
 
 /**
  * Input schemas for the tournament API routes.
@@ -26,7 +31,7 @@ export const joinTournamentSchema = z.object({
 
 /** `POST /api/auth/signup` — the display-name field only; email/password keep their existing handling. */
 export const signUpProfileSchema = z.object({
-  display_name: z.string().trim().min(1).max(40),
+  display_name: z.string().trim().min(1).max(MAX_DISPLAY_NAME_LENGTH),
 });
 
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;

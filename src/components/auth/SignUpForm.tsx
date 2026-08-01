@@ -4,9 +4,9 @@ import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
+import { MAX_DISPLAY_NAME_LENGTH } from "@/lib/tournament";
 
 const MIN_PASSWORD_LENGTH = 6;
-const MAX_DISPLAY_NAME_LENGTH = 40;
 
 interface Props {
   serverError?: string | null;

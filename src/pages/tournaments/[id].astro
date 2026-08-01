@@ -49,8 +49,19 @@ const nameById = new Map((rosterProfiles ?? []).map((p) => [p.id, p.display_name
 const initialPlayers = roster.map((p) => ({ ...p, display_name: nameById.get(p.user_id) ?? null }));
 
 // Once started, the player is shown ONE opponent: the other player in their lowest-numbered
-// unplayed match. Ordering by round_number is what makes the naming mutual -- both players of
-// a given round-r match reach it at the same ordinal, so each is told to find the other.
+// unplayed match.
+//
+// MUTUALITY IS NOT GUARANTEED, and this is S-03's problem to solve. Both players of a round-r
+// match reach it at the same ordinal only while everyone has completed the same number of
+// matches -- true today, because nothing marks a match finished yet. Once S-03 lands, a player
+// who is two matches ahead is sent to someone whose own lowest unplayed match is against a
+// third person. With A,B,C,D and the generated schedule (R1: A-B, C-D / R2: A-C, D-B /
+// R3: A-D, B-C), an A who has finished R1 and R2 is told to find D, while D -- who has played
+// nothing -- is told to find C.
+//
+// The plan asserts mutual naming AND free-pace progression; under a single-named-opponent rule
+// those are mutually exclusive, and S-03 owns choosing between them. See
+// reviews/impl-review.md F1.
 //
 // NOTE on access control: matches_select_member permits reading every match in a tournament
 // you belong to, not just your own. The .or() filter below is therefore what keeps a player

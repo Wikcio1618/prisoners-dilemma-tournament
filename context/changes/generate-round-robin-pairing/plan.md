@@ -339,6 +339,22 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 - RPC calling convention: `src/pages/api/tournaments/join.ts:41-48`
 - Upstream reviews: `context/changes/tournament-data-model/reviews/impl-review.md`, `context/changes/create-and-join-tournament/reviews/impl-review.md`
 
+## Addendum — implementation review, 2026-08-01
+
+`reviews/impl-review.md`, verdict NEEDS ATTENTION, 9 findings, no material drift across any of
+the four phases.
+
+**One correction to this plan, not to the code.** The Desired End State (line 21) promises
+"players who move faster are never blocked by players who move slower", and Phase 4's contract
+(line 259) promises that ordering by `round_number` makes the naming mutual. Under a
+single-named-opponent rule those two properties are mutually exclusive, and this plan should not
+have asserted both. Mutuality holds only while every player has completed the same number of
+matches — true today only because nothing marks a match finished.
+
+Decided as S-03's to resolve, recorded in `change.md`, with the false invariant corrected in
+`src/pages/tournaments/[id].astro`. Criterion 4.6 remains legitimately met: it tests the
+all-players-at-zero state, which is exactly the state this slice can produce.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

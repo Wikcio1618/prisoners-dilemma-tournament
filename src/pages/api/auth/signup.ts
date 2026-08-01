@@ -2,6 +2,8 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { signUpProfileSchema } from "@/lib/schemas";
 
+export const prerender = false;
+
 export const POST: APIRoute = async (context) => {
   const form = await context.request.formData();
   const email = form.get("email") as string;

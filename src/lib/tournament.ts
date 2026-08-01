@@ -27,6 +27,16 @@ export const MAX_ROUNDS_PER_MATCH = 20;
 export const DEFAULT_ROUNDS_PER_MATCH = 10;
 
 /**
+ * Longest display name a player may choose.
+ *
+ * Mirrored in two places that must stay in sync: the `profiles_display_name_length` CHECK in
+ * `supabase/migrations/20260731181103_player_profiles.sql`, and the `left(..., 40)` clamp in
+ * `public.handle_new_user()` — currently
+ * `supabase/migrations/20260801170309_profile_trigger_hardening.sql`.
+ */
+export const MAX_DISPLAY_NAME_LENGTH = 40;
+
+/**
  * Exact format of a tournament's join code: six digits.
  *
  * Unlike the round bounds above, this one *is* enforced in the database — the join code is

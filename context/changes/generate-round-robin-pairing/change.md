@@ -1,9 +1,9 @@
 ---
 change_id: generate-round-robin-pairing
 title: Generate round robin pairing
-status: implementing
+status: impl_reviewed
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-08-01
 archived_at: null
 ---
 
@@ -63,3 +63,26 @@ From `context/changes/create-and-join-tournament/reviews/impl-review.md`:
 - **F3 — unbounded creation exhausts the join-code space.** Unrelated to pairing but still open.
 - **F2 — accepted risk**: a guessed 6-digit code grants irrevocable membership, no rate limiting
   and no creator-kick path.
+
+### Handed to S-03 by this slice's implementation review (2026-08-01)
+
+`reviews/impl-review.md` F1, decided as "record for S-03" rather than fixed here.
+
+**S-03 must choose a pacing model before it marks a single match finished.** The opponent view
+names the other player in the caller's lowest-numbered unplayed match. That is mutual only while
+every player has completed the same number of matches — which is true today only because nothing
+can mark a match finished. The moment S-03 does, a player who is ahead is sent to someone whose
+own lowest unplayed match is against a third person.
+
+This slice's plan asserted both mutual naming and free-pace progression ("players who move faster
+are never blocked by players who move slower"). Under a single-named-opponent rule those are
+mutually exclusive, so S-03 picks one:
+
+- **Rounds as barriers** — mutual by construction, but a slow pair stalls everyone. Contradicts
+  the PRD's pace NFR.
+- **Live matching** — name an opponent only when that match is the lowest unplayed for *both*
+  players, otherwise show a wait state. Preserves free pace and mutuality; cost is that players
+  sometimes wait, and nobody has modelled how often at 50 players.
+
+Manual criterion 4.6 verified mutuality only in the all-players-at-zero state, which is the one
+state where it is guaranteed. Any S-03 test of this must start from an uneven completion count.

@@ -44,13 +44,25 @@ export const GET: APIRoute = async (context) => {
     });
   }
 
-  const { data: players } = await supabase
+  const { data: players, error: rosterError } = await supabase
     .from("tournament_players")
     .select("user_id, joined_at")
     .eq("tournament_id", id)
     .order("joined_at", { ascending: true });
 
-  const roster = players ?? [];
+  // Answering 200 with an empty roster would be a lie the client cannot detect: LobbyRoster
+  // treats any 200 as a successful poll, resets its failure counter, and would render every
+  // player out of the lobby on a transient database error. A 500 engages the counter instead.
+  if (rosterError) {
+    return new Response(JSON.stringify({ error: "roster_unavailable" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // No `?? []` fallback: the error guard above narrows this to a non-null array, which is the
+  // point of the guard -- an empty roster now means an empty roster, not a swallowed failure.
+  const roster = players;
 
   // Two queries rather than an embed: tournament_players.user_id references auth.users, not
   // profiles, so PostgREST has no relationship to traverse. The profiles read is scoped by its
