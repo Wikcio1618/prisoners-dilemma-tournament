@@ -48,7 +48,45 @@ const { data: rosterProfiles } =
 const nameById = new Map((rosterProfiles ?? []).map((p) => [p.id, p.display_name]));
 const initialPlayers = roster.map((p) => ({ ...p, display_name: nameById.get(p.user_id) ?? null }));
 
-const joinUrl = tournament ? new URL(`/join/${tournament.join_code}`, Astro.url.origin).toString() : "";
+// Once started, the player is shown ONE opponent: the other player in their lowest-numbered
+// unplayed match. Ordering by round_number is what makes the naming mutual -- both players of
+// a given round-r match reach it at the same ordinal, so each is told to find the other.
+//
+// NOTE on access control: matches_select_member permits reading every match in a tournament
+// you belong to, not just your own. The .or() filter below is therefore what keeps a player
+// from seeing other pairs -- application code, not the policy. Tightening the policy to
+// own-matches-only would be stronger, but S-04's statistics will need the wider read.
+const started = tournament && tournament.status !== "lobby";
+const { data: myMatches } =
+  started && supabase && user
+    ? await supabase
+        .from("matches")
+        .select("id, round_number, player_a_id, player_b_id")
+        .eq("tournament_id", tournament.id)
+        .in("status", ["pending", "in_progress"])
+        .or(`player_a_id.eq.${user.id},player_b_id.eq.${user.id}`)
+        .order("round_number", { ascending: true })
+        .limit(1)
+    : { data: [] };
+
+// .at() rather than [0]: it yields `undefined` in the type, so the null-check below is
+// meaningful to the compiler rather than dead.
+const nextMatch = (myMatches ?? []).at(0) ?? null;
+const opponentId = nextMatch
+  ? nextMatch.player_a_id === user?.id
+    ? nextMatch.player_b_id
+    : nextMatch.player_a_id
+  : null;
+const { data: opponentProfile } =
+  opponentId && supabase
+    ? await supabase.from("profiles").select("display_name").eq("id", opponentId).maybeSingle()
+    : { data: null };
+const opponentName = opponentProfile?.display_name ?? null;
+
+// Gated on `lobby` rather than merely unused after the start: the join code is a credential,
+// and this keeps it out of the rendered output by construction instead of by which branch of
+// the template happens to reference it.
+const joinUrl = tournament && !started ? new URL(`/join/${tournament.join_code}`, Astro.url.origin).toString() : "";
 const isCreator = tournament?.creator_id === user?.id;
 const error = Astro.url.searchParams.get("error");
 ---
@@ -82,21 +120,35 @@ const error = Astro.url.searchParams.get("error");
                 <p class="text-xs break-all text-blue-100/50">{joinUrl}</p>
               </div>
             ) : (
-              <div class="mb-6 rounded-xl border border-purple-400/30 bg-purple-400/10 p-4 text-center">
-                <p class="text-sm text-purple-100">Turniej się rozpoczął. Dołączanie jest zamknięte.</p>
-                <p class="mt-1 text-xs text-purple-100/60">Parowanie graczy pojawi się w kolejnym kroku.</p>
+              <div class="mb-6 rounded-xl border border-purple-400/30 bg-purple-400/10 p-6 text-center">
+                {nextMatch ? (
+                  <>
+                    <p class="text-xs text-purple-100/70">Twój przeciwnik</p>
+                    <p class="my-2 text-3xl font-bold text-white">{opponentName ?? "Nieznany gracz"}</p>
+                    <p class="text-xs text-purple-100/60">
+                      Runda {nextMatch.round_number} — odszukaj tę osobę i rozegrajcie mecz.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p class="text-sm text-purple-100">Nie masz już meczów do rozegrania.</p>
+                    <p class="mt-1 text-xs text-purple-100/60">Poczekaj na zakończenie turnieju.</p>
+                  </>
+                )}
               </div>
             )}
 
             <p class="mb-4 text-xs text-blue-100/50">Rund w meczu: {tournament.rounds_per_match}</p>
 
-            <LobbyRoster
-              tournamentId={tournament.id}
-              currentUserId={user?.id ?? ""}
-              initialPlayers={initialPlayers}
-              initialStatus={tournament.status}
-              client:load
-            />
+            {tournament.status === "lobby" && (
+              <LobbyRoster
+                tournamentId={tournament.id}
+                currentUserId={user?.id ?? ""}
+                initialPlayers={initialPlayers}
+                initialStatus={tournament.status}
+                client:load
+              />
+            )}
 
             <div class="mt-6 flex items-center justify-between gap-3">
               <a href="/tournaments" class="text-sm text-purple-300 hover:underline">

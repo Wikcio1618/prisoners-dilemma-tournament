@@ -68,6 +68,11 @@ export default function LobbyRoster({ tournamentId, currentUserId, initialPlayer
           const body: { status: string; players: Player[] } = await res.json();
           setPlayers(body.players);
           setStatus(body.status);
+          // The creator started the tournament from another device. Everything around this
+          // component — the join code, the leave button, the opponent panel — is server
+          // rendered from the status, so a reload is what turns the lobby into the opponent
+          // view. Without it the poll would just stop and leave a join code on screen.
+          if (body.status !== "lobby") window.location.reload();
         } catch {
           // Includes the AbortError from cleanup. A dropped poll is not worth surfacing —
           // the next tick retries, and the roster on screen is still the last known good one.
