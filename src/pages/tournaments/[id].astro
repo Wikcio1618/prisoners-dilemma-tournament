@@ -91,7 +91,7 @@ const isCreator = tournament?.creator_id === user?.id;
 const error = Astro.url.searchParams.get("error");
 ---
 
-<Layout title="Poczekalnia turnieju">
+<Layout title={started ? "Turniej trwa" : "Poczekalnia turnieju"}>
   <div class="bg-cosmic flex min-h-screen items-start justify-center p-4">
     <div class="mt-10 w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
       {
@@ -106,7 +106,7 @@ const error = Astro.url.searchParams.get("error");
         ) : (
           <>
             <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent">
-              Poczekalnia
+              {tournament.status === "lobby" ? "Poczekalnia" : "Turniej trwa"}
             </h1>
 
             {error && (

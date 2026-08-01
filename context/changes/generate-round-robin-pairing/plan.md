@@ -410,8 +410,8 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Manual
 
-- [ ] 4.5 Each player in a started 4-player tournament sees exactly one opponent
-- [ ] 4.6 Two players in the same round-1 match see each other
-- [ ] 4.7 No player can see the full schedule or a match they are not in
-- [ ] 4.8 The join code, start button and leave button are gone once started
-- [ ] 4.9 The opponent endpoint returns nothing for a non-member
+- [x] 4.5 Each player in a started 4-player tournament sees exactly one opponent
+- [x] 4.6 Two players in the same round-1 match see each other
+- [x] 4.7 No player can see the full schedule or a match they are not in
+- [x] 4.8 The join code, start button and leave button are gone once started
+- [x] 4.9 The opponent endpoint returns nothing for a non-member
