@@ -403,10 +403,10 @@ The irreversible-in-practice step is dropping `tournaments_update_creator_in_lob
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npx tsc --noEmit`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build succeeds: `npm run build`
-- [x] 4.4 The started view does not render the join code
+- [x] 4.1 Type checking passes: `npx tsc --noEmit` — e4386f3
+- [x] 4.2 Linting passes: `npm run lint` — e4386f3
+- [x] 4.3 Build succeeds: `npm run build` — e4386f3
+- [x] 4.4 The started view does not render the join code — e4386f3
 
 #### Manual
 
