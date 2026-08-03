@@ -23,10 +23,11 @@ Prisoner's Dilemma Tournament — an Astro 6 SSR app with React 19 islands, Tail
 - `npm run build` — production build; `npm run preview` — preview it
 - `npm run lint` / `npm run lint:fix` — ESLint with type-checked rules
 - `npm run format` — Prettier (astro + tailwind plugins)
+- `npm run test` — Vitest (unit + property-based, `src/**/*.test.ts`); `npm run test:watch` to iterate
 - `npm run deploy` — `wrangler deploy` to Cloudflare Workers (worker name: `prisoners-dilemma-tournament`)
 - `npx supabase start` — local Supabase (requires Docker); `npx supabase stop` to end it
 
-No test runner is configured in this project yet.
+Tests are Vitest + fast-check, colocated as `*.test.ts` siblings of the module they cover (`src/lib/tournament.test.ts` beside `src/lib/tournament.ts`). Config is a standalone `@vitest.config.ts` — deliberately not Astro's `getViteConfig`, which would pull the Cloudflare adapter's Vite plugin chain into every run — so the `@/*` alias is re-declared there. Modules importing `astro:env/server` or `cloudflare:workers` cannot be unit-tested; those virtual specifiers resolve only inside their own bundlers. Read `@context/foundation/test-plan.md` §6 before adding a test.
 
 ## Coding Style & Naming Conventions
 
@@ -34,7 +35,7 @@ TypeScript strict mode (`astro/tsconfigs/strict`); path alias `@/*` → `./src/*
 
 ## CI Gate
 
-`@.github/workflows/ci.yml` runs on push/PR to `master`: `npx astro sync`, `npm run lint`, `npm run build`. The build step requires `SUPABASE_URL` and `SUPABASE_KEY` as GitHub repository secrets. On `push` to `master` only, a second `deploy` job also runs `wrangler deploy` via `cloudflare/wrangler-action@v3`, using the `CLOUDFLARE_API_TOKEN` repository secret and syncing `SUPABASE_URL`/`SUPABASE_KEY` as Workers Secrets on every deploy.
+`@.github/workflows/ci.yml` runs on push/PR to `master`: `npx astro sync`, `npm run lint`, `npm run test`, `npm run build`. The build step requires `SUPABASE_URL` and `SUPABASE_KEY` as GitHub repository secrets. On `push` to `master` only, a second `deploy` job also runs `wrangler deploy` via `cloudflare/wrangler-action@v3`, using the `CLOUDFLARE_API_TOKEN` repository secret and syncing `SUPABASE_URL`/`SUPABASE_KEY` as Workers Secrets on every deploy.
 
 ## Security & Configuration
 

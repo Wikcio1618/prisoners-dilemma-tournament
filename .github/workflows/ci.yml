@@ -18,6 +18,9 @@ jobs:
       - run: npm ci
       - run: npx astro sync
       - run: npm run lint
+      # Before build: unit tests run in seconds, the Astro/Cloudflare build does not, so a broken
+      # test fails the job fast. Needs no Supabase secrets — these tests import only pure modules.
+      - run: npm run test
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

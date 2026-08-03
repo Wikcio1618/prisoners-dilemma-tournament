@@ -59,6 +59,22 @@ const reactConfig = tseslint.config({
   },
 });
 
+// Test files are still type-checked and still Prettier-formatted; only the `no-unsafe-*` family
+// is relaxed. Those rules fire constantly on ordinary test scaffolding — parsed JSON fixtures,
+// deliberately malformed inputs cast to the function's parameter type — where the unsoundness is
+// the point of the test rather than a defect. Everything else in strictTypeChecked still applies.
+const testConfig = tseslint.config({
+  files: ["**/*.test.ts"],
+  rules: {
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+});
+
 const astroConfig = tseslint.config({
   files: ["**/*.astro"],
   rules: {
@@ -79,5 +95,6 @@ export default tseslint.config(
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
   astroConfig,
+  testConfig,
   eslintPluginPrettier,
 );
