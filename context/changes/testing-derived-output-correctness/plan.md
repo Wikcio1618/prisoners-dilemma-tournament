@@ -799,12 +799,12 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [x] 6.1 Full suite passes: `npm run test`
-- [x] 6.2 Lint and build pass: `npm run lint`, `npm run build`
-- [x] 6.3 No `TBD — see §3 Phase 1` markers remain in `test-plan.md`
+- [x] 6.1 Full suite passes: `npm run test` — 9a02b30
+- [x] 6.2 Lint and build pass: `npm run lint`, `npm run build` — 9a02b30
+- [x] 6.3 No `TBD — see §3 Phase 1` markers remain in `test-plan.md` — 9a02b30
 
 #### Manual
 
-- [x] 6.4 §6.1 answers "how do I add a test for a derived value here?" standalone
-- [x] 6.5 §3 Phase 1 reads `complete` and pairing appears under Phase 2
-- [x] 6.6 `change.md` records the payoff matrix decision findably
+- [x] 6.4 §6.1 answers "how do I add a test for a derived value here?" standalone — 9a02b30
+- [x] 6.5 §3 Phase 1 reads `complete` and pairing appears under Phase 2 — 9a02b30
+- [x] 6.6 `change.md` records the payoff matrix decision findably — 9a02b30
