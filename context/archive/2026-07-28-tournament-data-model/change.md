@@ -1,10 +1,10 @@
 ---
 change_id: tournament-data-model
 title: Tournament data model
-status: impl_reviewed
+status: archived
 created: 2026-07-28
-updated: 2026-07-29
-archived_at: null
+updated: 2026-08-03
+archived_at: 2026-08-03T19:58:36Z
 ---
 
 ## Notes

@@ -1,10 +1,10 @@
 ---
 change_id: generate-round-robin-pairing
 title: Generate round robin pairing
-status: impl_reviewed
+status: archived
 created: 2026-07-31
-updated: 2026-08-01
-archived_at: null
+updated: 2026-08-03
+archived_at: 2026-08-03T19:58:36Z
 ---
 
 ## Notes

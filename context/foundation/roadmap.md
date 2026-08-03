@@ -3,7 +3,7 @@ project: "Prisoner's Dilemma Tournament"
 version: 1
 status: draft
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-03
 prd_version: 1
 main_goal: speed
 top_blocker: skills
@@ -29,10 +29,10 @@ A youth-camp counselor wants to teach game theory experientially by running a li
 
 | ID   | Change ID                    | Outcome (user can …)                                                          | Prerequisites | PRD refs                  | Status   |
 | ---- | ----------------------------- | ------------------------------------------------------------------------------ | -------------- | -------------------------- | -------- |
-| F-01 | tournament-data-model          | (foundation) tournament + membership schema, plus an empty matches table       | —              | Access Control, FR-001, FR-002 | planned  |
-| S-01 | create-and-join-tournament     | create a tournament and have others join via code/link                        | F-01           | FR-001, FR-002              | proposed |
-| S-02 | generate-round-robin-pairing   | start the tournament and see automatically generated round-robin pairing      | S-01           | FR-003                      | proposed |
-| F-02 | realtime-match-scaffold        | (foundation) minimal live-room infra exists for one hidden-then-revealed round | F-01           | NFR (stakes/rivalry), NFR (pace resilience) | proposed |
+| F-01 | tournament-data-model          | (foundation) tournament + membership schema, plus an empty matches table       | —              | Access Control, FR-001, FR-002 | done  |
+| S-01 | create-and-join-tournament     | create a tournament and have others join via code/link                        | F-01           | FR-001, FR-002              | done |
+| S-02 | generate-round-robin-pairing   | start the tournament and see automatically generated round-robin pairing      | S-01           | FR-003                      | done |
+| F-02 | realtime-match-scaffold        | (foundation) minimal live-room infra exists for one hidden-then-revealed round | F-01           | NFR (stakes/rivalry), NFR (pace resilience) | done |
 | S-03 | hidden-move-match-play         | play a match round with hidden, simultaneous move reveal and live history      | S-02, F-02      | US-01, FR-004, FR-005, FR-006, FR-007 | proposed |
 | S-04 | tournament-results-and-stats   | see final statistics and scoreboard once the tournament concludes             | S-03           | FR-008, Success Criteria (Secondary) | proposed |
 
@@ -72,7 +72,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** — (resolved 2026-07-28: the ~50-player cap is a hardcoded server-side constant, not configurable; round count is 1–20 with a default of 10, validated in application code)
 - **Risk:** Scoped deliberately narrow (tournament + membership + an empty matches table) so it doesn't turn into a full-schema-upfront project. The live risk is that policy behaviour is deliberately unverified until S-01 — recursion and grant mistakes fail at query time, not migration time.
-- **Status:** planned — see `context/changes/tournament-data-model/plan.md`
+- **Status:** done
 
 ### F-02: Realtime match-room scaffolding
 
@@ -85,7 +85,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is where `top_blocker: skills` concentrates — the project's own infrastructure research flagged that Cloudflare's official Astro adapter doesn't cover WebSockets out of the box, and the working pattern (Durable Objects + WebSocket hibernation) needs deliberate, first-time implementation. Scoped to the smallest working version (one round, two players) specifically so the learning cost is paid once, early enough to still change course, and isolated from the rest of the match-play logic in S-03. Also must satisfy the PRD guardrail that a player can never see the opponent's choice before both have committed.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -99,7 +99,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Straightforward CRUD-shaped slice on top of F-01; main risk is scope creep into pairing/match concerns that belong to S-02/S-03.
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: Tournament creator starts the tournament and pairing is generated
 
@@ -111,7 +111,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Round-robin generation must guarantee no self-pairing and close the join window on start (both explicit PRD guardrails/FRs) — logic bugs here are hard to spot without a test tournament of realistic size.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Two players play a match round with hidden, simultaneous move reveal
 
@@ -174,3 +174,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Done
 
+- **F-01: (foundation) A tournament can be created and stores a fixed round-count, players can be recorded as members of it via a join code, and a structural `matches` table exists.** — Archived 2026-08-03 → `context/archive/2026-07-28-tournament-data-model/`. Lesson: a status value with no exit transition bricks the row; see `context/foundation/lessons.md`.
+- **F-02: (foundation) A minimal live-room mechanism exists that can hold two players' state for one round and reveal both moves only once both have committed.** — Archived 2026-08-03 → `context/archive/2026-07-28-realtime-match-scaffold/`. Lesson: committed moves are what make a round terminal — wiping storage on reveal made rooms infinitely replayable.
+- **S-01: user can create a tournament (setting a fixed round count) and share a join code/link that lets other logged-in players join before it starts.** — Archived 2026-08-03 → `context/archive/2026-07-30-create-and-join-tournament/`. Lesson: a route that reports success when the write was refused shipped twice here; assert the refused branch, not just the status code.
+- **S-02: user (as creator) can manually start the tournament once players have joined, and every player then sees their automatically generated round-robin pairing.** — Archived 2026-08-03 → `context/archive/2026-07-31-generate-round-robin-pairing/`. Lesson: the opponent view's mutuality holds only at equal completion counts — S-03 owns the pacing model before any match is marked finished.
