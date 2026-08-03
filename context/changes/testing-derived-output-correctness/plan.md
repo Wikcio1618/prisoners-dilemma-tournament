@@ -730,16 +730,16 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [x] 1.1 Test suite runs and passes: `npm run test`
-- [x] 1.2 Linting passes including the new test file: `npm run lint`
-- [x] 1.3 Build is unaffected: `npm run build`
-- [x] 1.4 Vitest resolves the `@/*` alias
+- [x] 1.1 Test suite runs and passes: `npm run test` — 703db3d
+- [x] 1.2 Linting passes including the new test file: `npm run lint` — 703db3d
+- [x] 1.3 Build is unaffected: `npm run build` — 703db3d
+- [x] 1.4 Vitest resolves the `@/*` alias — 703db3d
 
 #### Manual
 
-- [x] 1.5 `npm run test:watch` starts and re-runs on file change
-- [x] 1.6 Pre-commit hook does not reject a staged `*.test.ts` file
-- [x] 1.7 CI shows the test step running between lint and build
+- [x] 1.5 `npm run test:watch` starts and re-runs on file change — 703db3d
+- [x] 1.6 Pre-commit hook does not reject a staged `*.test.ts` file — 703db3d
+- [x] 1.7 CI shows the test step running between lint and build — 703db3d
 
 ### Phase 2: Pure-Function and Drift Tests
 
