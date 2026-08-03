@@ -759,15 +759,15 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [ ] 3.1 Suite still passes with the todo cases present: `npm run test`
-- [ ] 3.2 Vitest reports the todo count in its summary rather than failures
-- [ ] 3.3 Linting passes: `npm run lint`
+- [x] 3.1 Suite still passes with the todo cases present: `npm run test`
+- [x] 3.2 Vitest reports the todo count in its summary rather than failures
+- [x] 3.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 3.4 PRD amendment reads as an implementable specification
-- [ ] 3.5 Each expected value is re-derivable by hand from the PRD text alone
-- [ ] 3.6 Withdrawal of the zero-balance requirement is recorded as a decision
+- [x] 3.4 PRD amendment reads as an implementable specification
+- [x] 3.5 Each expected value is re-derivable by hand from the PRD text alone
+- [x] 3.6 Withdrawal of the zero-balance requirement is recorded as a decision
 
 ### Phase 4: Pairing Oracle
 

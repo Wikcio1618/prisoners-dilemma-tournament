@@ -134,7 +134,13 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Prerequisites:** S-03
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:** —
+- **Unknowns:**
+  - **Move persistence is undesigned and blocks this whole slice.** Round-by-round moves live only in Durable Object storage; the DO holds no database credential and nothing writes move history to Postgres. Statistics cannot be computed from data that was never persisted. Owner: user. Block: **yes** — S-03 must resolve it.
+- **Inherited decisions** (from `testing-derived-output-correctness`, 2026-08-01 — do not re-derive):
+  - **The scoring specification is ratified in the PRD** under Business Logic → *Scoring specification*: the Axelrod payoff matrix (3/5/0/1), score as a plain sum, matches-played displayed alongside it, and the operational definitions of initial aggression and forgiveness including their undefined cases. The "zero-balanced" weighting requirement was **deliberately withdrawn**, not lost.
+  - **Compute scoring and statistics in a pure TypeScript module under `src/lib/`**, deliberately departing from the PL/pgSQL precedent set by `join_tournament` and `start_tournament` (and from the definer-function intent noted in `20260729192557_tighten_tournament_update_policy.sql`). The reason is testability: SQL-resident logic is unreachable from the unit suite, which is exactly why pairing needed a separate oracle. The definer function owns persistence and the status flip only.
+  - **Turn on the `test.todo` cases in `src/lib/scoring.test.ts`** rather than writing new expectations. Their values were derived by hand from the PRD specification *before* any implementation existed, which is the only thing that makes them a real oracle — regenerating them from the implementation would make the tests tautological.
+  - **S-04 also owns D1**, the `tournaments.status` dead end: `started` has no exit transition and `finished` has no writer, so a started tournament can never conclude. See `context/changes/testing-derived-output-correctness/research.md`.
 - **Risk:** Needs a reliable "tournament concluded" signal (all pairings' matches complete) derived from S-02+S-03 data — getting that detection wrong either locks the scoreboard open too early or never fires.
 - **Status:** proposed
 

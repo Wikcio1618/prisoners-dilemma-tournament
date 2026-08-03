@@ -74,7 +74,7 @@ No secondary persona. The counselor/facilitator uses the same app and view as an
   > Socrates: No counter-argument; it stands as written.
 - FR-007: Player can see the round-by-round history of the current match while it is in progress (moves and outcomes so far). Priority: must-have
   > Socrates: No counter-argument; it stands as written.
-- FR-008: Player can see the final statistics and scoreboard after the tournament concludes. Priority: must-have
+- FR-008: Player can see the final statistics and scoreboard after the tournament concludes — score, matches played, initial aggression and forgiveness, each exactly as defined in Business Logic → **Scoring specification**. Priority: must-have
   > Socrates: No counter-argument; it stands as written.
 
 ## Non-Functional Requirements
@@ -86,13 +86,46 @@ No secondary persona. The counselor/facilitator uses the same app and view as an
 
 ## Business Logic
 
-The app determines each round's opponent pairings from the tournament's active player list and each player's match history so far, and derives every player's zero-balanced score and behavioral statistics from their full recorded move history.
+The app determines each round's opponent pairings from the tournament's active player list and each player's match history so far, and derives every player's score and behavioral statistics from their full recorded move history. The operational definitions of those derived values are specified below under **Scoring specification**.
 
 **Inputs.** Pairing draws on the list of players currently active in the tournament and each player's match history within that tournament (who they've already played), so no player is paired against an opponent they've already faced or against themselves. Statistics draw on every match a player has recorded in the tournament — the complete round-by-round sequence of their own and their opponents' moves.
 
-**Output.** Pairing produces a list of opponent pairs for the upcoming round. Statistics produce a set of calculated metrics per player: a zero-balanced score (weighted so that playing more matches doesn't itself confer an advantage) and behavioral classifications derived from move patterns (e.g., forgiveness, initial aggression).
+**Output.** Pairing produces a list of opponent pairs for the upcoming round. Statistics produce a set of calculated metrics per player: a score, the number of matches they played, and two behavioral classifications derived from move patterns — initial aggression and forgiveness. All four are defined operationally under **Scoring specification** below.
 
 **Product flow.** A player encounters the pairing output at the start of each round, when they see who their next opponent is. They encounter the statistics output once the tournament concludes, on the final scoreboard/summary.
+
+### Scoring specification
+
+Ratified 2026-08-01. This subsection is the sole authority for every derived value on the scoreboard. It exists because the earlier prose named the outputs without defining them, which meant no expected value could be computed from the PRD alone — and a statistic that can only be derived from its own implementation cannot be checked against anything.
+
+**Payoff matrix.** Each round awards each player points from their own move and their opponent's, using the standard Axelrod values:
+
+| Own move | Opponent's move | Points to you |
+| --- | --- | --- |
+| Współpraca | Współpraca | **3** |
+| Sabotaż | Współpraca | **5** |
+| Współpraca | Sabotaż | **0** |
+| Sabotaż | Sabotaż | **1** |
+
+These satisfy both constraints that make this a Prisoner's Dilemma rather than an arbitrary game: `T > R > P > S` (5 > 3 > 1 > 0), so defecting against a cooperator is individually best and mutual defection beats being exploited; and `2R > T + S` (6 > 5), which is what makes sustained mutual cooperation beat alternating exploitation over repeated rounds. Change either constraint and the strategic patterns the tournament exists to teach stop appearing.
+
+**Score.** The plain sum of a player's points across every round they played in the tournament.
+
+> **The "zero-balanced" weighting requirement is withdrawn**, deliberately, on 2026-08-01 — not lost. It was never formalized (it was deferred in `shape-notes.md` and never resolved), and when the round robin completes it ranks identically to any per-round average, because every player plays the same number of matches. Its only effect would be on an incomplete tournament, where the honest fix is showing how much each player actually played rather than hiding it inside a weighting nobody can interpret. See **Matches played**.
+
+**Matches played.** Displayed alongside every score, always. With no forfeit or timeout handling in MVP (see FR-004) and the free-pacing NFR, players can finish different numbers of matches, so a raw total can favour volume over skill. Surfacing the count lets the facilitator see and explain that during the debrief instead of being misled by it. A worked example: a player with 19 points from 7 rounds is ahead on the board of one with 14 points from 5, while being behind on points per round (2.71 vs 2.8).
+
+**Initial aggression.** The fraction of a player's matches in which their *first* move was Sabotaż:
+
+> (matches whose first move by this player was Sabotaż) ÷ (matches in which this player played at least one round)
+
+**Undefined when the denominator is zero** — a player who played no rounds has no initial aggression, which is not the same as zero.
+
+**Forgiveness.** How often a player answered a defection with cooperation. Consider every round *i* within a match where the opponent played Sabotaż at round *i−1* and round *i* exists; forgiveness is the fraction of those in which this player played Współpraca at round *i*.
+
+**Undefined when the player was never provoked.** Note that a match's final round is never a provocation, because no round follows it — a player who defects only on the last round has provoked nobody.
+
+**Rendering undefined values.** Any undefined statistic renders as `—`. Never as `0`, which reads as "never aggressive" or "never forgives" and is the opposite of the truth in the forgiveness case; never as `1.0`; and never by omitting the player from the board.
 
 ## Access Control
 
