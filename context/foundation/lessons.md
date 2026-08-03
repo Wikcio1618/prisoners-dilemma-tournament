@@ -10,9 +10,9 @@
 
 **Why this is a rule and not an observation.** Three separate implementation reviews each independently rediscovered an instance, which is the definition of a class rather than a bug:
 
-- `tournament-data-model` F1 — `tournaments.status` could reach `finished`, which bricked the row: no policy allowed leaving it, and nothing wrote it either.
-- `realtime-match-scaffold` F2 — the round was not terminal, so rooms were infinitely replayable; the fix was to make committed moves themselves the terminal marker.
-- `generate-round-robin-pairing` F1 — the opponent view's mutuality invariant holds only while every player has completed the same number of matches, so the first slice that marks a match `finished` breaks it.
+- `tournament-data-model` F1 (`reviews/impl-review.md:36-53`) — `tournaments.status` could reach `finished`, which bricked the row: no policy allowed leaving it, and nothing wrote it either.
+- `realtime-match-scaffold` F2 (`reviews/impl-review.md:49-61`) — the round was not terminal, so rooms were infinitely replayable; the fix was to make committed moves themselves the terminal marker.
+- `generate-round-robin-pairing` F1 (`reviews/impl-review.md:30-79`) — the opponent view's mutuality invariant holds only while every player has completed the same number of matches, so the first slice that marks a match `finished` breaks it.
 
 All three were caught by human review. Human review is not a mechanism; it catches what a reader happens to notice on the day.
 
@@ -22,6 +22,6 @@ All three were caught by human review. Human review is not a mechanism; it catch
 
 **Rule.** Whenever a literal must agree across the database and application code — a cap, a bound, a regex, an error token, a status vocabulary — add an assertion that reads both and compares them. A comment saying "keep in sync with X" is documentation of an intention, not enforcement of it.
 
-**Why.** This repo shipped the class twice. `tournament-data-model` F3: a player-cap comment pointed at a migration that had already been superseded, so the comment was actively misleading. `generate-round-robin-pairing` F6: the display-name bound was restated as a literal in three places, in a file whose own header says bounds are "never restated as literals." Both were caught by review; neither was caught by anything that runs.
+**Why.** This repo shipped the class twice. `tournament-data-model` F3 (`reviews/impl-review.md`): a player-cap comment pointed at a migration that had already been superseded, so the comment was actively misleading. `generate-round-robin-pairing` F6 (`reviews/impl-review.md`): the display-name bound was restated as a literal in three places, in a file whose own header says bounds are "never restated as literals." Both were caught by review; neither was caught by anything that runs.
 
 **How to apply.** `src/lib/db-constants.test.ts` is the mechanism and the pattern to copy: read the migration file as a text fixture, extract the literal with a narrow regex, assert against the TypeScript constant, and write the failure message so it names both sides and the migration path. No database required, milliseconds to run. When a migration supersedes one the test reads, update the path deliberately — a drift test silently reading a stale file is the very failure it exists to prevent.

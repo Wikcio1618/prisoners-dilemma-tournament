@@ -16,8 +16,12 @@ describe("generateJoinCode", () => {
   // proves nothing about the next one. What matters is that every possible output satisfies
   // the database constraint, and only a run over many samples can argue that.
   it("always produces a code the database will accept", () => {
+    // fc.constant(null), not fc.integer(): the generated value is unused, and a generator whose
+    // output the predicate ignores makes fast-check's shrinking and counterexample reporting
+    // meaningless — a failure would print an unrelated integer. What is being sampled here is
+    // the function's own randomness, not an input.
     fc.assert(
-      fc.property(fc.integer(), () => {
+      fc.property(fc.constant(null), () => {
         const code = generateJoinCode();
         expect(code).toHaveLength(JOIN_CODE_LENGTH);
         expect(code).toMatch(JOIN_CODE_PATTERN);
@@ -53,14 +57,36 @@ describe("generateJoinCode", () => {
   });
 });
 
+/**
+ * The two vocabularies deliberately overlap on `not_authenticated` and `tournament_not_found`.
+ * Only the tokens unique to one should be refused by the other's guard — and if the overlap
+ * ever grew to cover everything, an `it.each` over an empty array would register no tests
+ * beside its passing siblings and nobody would notice. Hence the non-vacuity assertions below.
+ */
+const START_ONLY = Object.values(START_TOURNAMENT_ERRORS).filter(
+  (t) => !Object.values(JOIN_TOURNAMENT_ERRORS).includes(t as never),
+);
+const JOIN_ONLY = Object.values(JOIN_TOURNAMENT_ERRORS).filter(
+  (t) => !Object.values(START_TOURNAMENT_ERRORS).includes(t as never),
+);
+
 describe("isJoinTournamentError", () => {
-  it.each(Object.values(JOIN_TOURNAMENT_ERRORS))("accepts its own token %s", (token) => {
-    expect(isJoinTournamentError(token)).toBe(true);
+  // Literal strings, not Object.values(JOIN_TOURNAMENT_ERRORS). The guard IS
+  // `Object.values(...).includes(x)`, so feeding it its own values is an identity that cannot
+  // fail. These literals are the wire contract the database raises in `detail` — the SQL side
+  // of the same pair is asserted in db-constants.test.ts.
+  it.each(["not_authenticated", "tournament_not_found", "tournament_already_started", "tournament_full"])(
+    "accepts the wire token %s",
+    (token) => {
+      expect(isJoinTournamentError(token)).toBe(true);
+    },
+  );
+
+  it("has start-only tokens to reject, so the cases below are not vacuous", () => {
+    expect(START_ONLY.length).toBeGreaterThan(0);
   });
 
-  it.each(
-    Object.values(START_TOURNAMENT_ERRORS).filter((t) => !Object.values(JOIN_TOURNAMENT_ERRORS).includes(t as never)),
-  )("rejects the start-only token %s", (token) => {
+  it.each(START_ONLY)("rejects the start-only token %s", (token) => {
     // The two vocabularies overlap deliberately (not_authenticated, tournament_not_found).
     // Only the tokens unique to start should be refused here.
     expect(isJoinTournamentError(token)).toBe(false);
@@ -75,13 +101,18 @@ describe("isJoinTournamentError", () => {
 });
 
 describe("isStartTournamentError", () => {
-  it.each(Object.values(START_TOURNAMENT_ERRORS))("accepts its own token %s", (token) => {
-    expect(isStartTournamentError(token)).toBe(true);
+  it.each(["not_authenticated", "tournament_not_found", "tournament_finished", "not_enough_players"])(
+    "accepts the wire token %s",
+    (token) => {
+      expect(isStartTournamentError(token)).toBe(true);
+    },
+  );
+
+  it("has join-only tokens to reject, so the cases below are not vacuous", () => {
+    expect(JOIN_ONLY.length).toBeGreaterThan(0);
   });
 
-  it.each(
-    Object.values(JOIN_TOURNAMENT_ERRORS).filter((t) => !Object.values(START_TOURNAMENT_ERRORS).includes(t as never)),
-  )("rejects the join-only token %s", (token) => {
+  it.each(JOIN_ONLY)("rejects the join-only token %s", (token) => {
     expect(isStartTournamentError(token)).toBe(false);
   });
 

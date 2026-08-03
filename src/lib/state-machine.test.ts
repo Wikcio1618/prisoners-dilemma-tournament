@@ -1,6 +1,11 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { MATCH_STATUSES, TOURNAMENT_STATUSES } from "@/lib/tournament";
+
+const MIGRATIONS = fileURLToPath(new URL("../../supabase/migrations/", import.meta.url));
 
 /**
  * The transition table, and the four dead ends it currently contains.
@@ -64,26 +69,67 @@ describe("transition table integrity", () => {
   });
 
   it("only ever names states that exist in the vocabulary", () => {
+    let checked = 0;
+
     for (const { value, exits } of TOURNAMENT_TRANSITIONS) {
       for (const exit of exits) {
         expect(TOURNAMENT_STATUSES as readonly string[], `${value} -> ${exit}`).toContain(exit);
+        checked++;
       }
     }
     for (const { value, exits } of MATCH_TRANSITIONS) {
       for (const exit of exits) {
         expect(MATCH_STATUSES as readonly string[], `${value} -> ${exit}`).toContain(exit);
+        checked++;
       }
     }
+
+    // Every MATCH_TRANSITIONS entry currently has `exits: []`, so that second loop never runs
+    // and this test would otherwise assert nothing about matches. Counting makes the coverage
+    // visible: today it is 1 (lobby -> started), and when S-03 gives a match status an exit
+    // this number rises rather than the test silently continuing to check nothing.
+    expect(checked, "the transition table declares no exits at all — this test asserted nothing").toBeGreaterThan(0);
   });
 
   it("records the dead ends this file's todos are about", () => {
-    // Pins the current state so that if someone fixes a dead end without turning on the
-    // matching todo, this fails and points them at it.
+    // Pins the hand-maintained model itself, so an unexplained edit to the table above is
+    // visible. This does NOT detect a dead end being fixed in SQL — that is the next test's
+    // job, and the distinction matters: a table compared only to itself proves nothing about
+    // the database.
     const tournamentDeadEnds = TOURNAMENT_TRANSITIONS.filter((t) => t.exits.length === 0).map((t) => t.value);
     const matchesWithoutWriter = MATCH_TRANSITIONS.filter((t) => t.writer === null).map((t) => t.value);
 
     expect(tournamentDeadEnds).toEqual(["started", "finished"]);
     expect(matchesWithoutWriter).toEqual(["in_progress", "finished", "abandoned"]);
+  });
+
+  it("stays in step with what the migrations actually write", () => {
+    // The claim the previous test used to make falsely. Fixing a dead end means adding SQL —
+    // an UPDATE policy, or a function writing `finished` — and that would leave the table
+    // above describing a database that no longer exists, with its todos quietly obsolete.
+    //
+    // Scanning migration text is coarse (it cannot tell a live definition from a dropped one)
+    // so this asserts only the direction that matters: if a status the model calls unwritten
+    // acquires a writer, this fails and sends the reader to the matching todo.
+    const sql = readdirSync(MIGRATIONS)
+      .filter((name) => name.endsWith(".sql"))
+      .map((name) => readFileSync(MIGRATIONS + name, "utf8"))
+      .join("\n");
+
+    for (const { value, writer } of [...TOURNAMENT_TRANSITIONS, ...MATCH_TRANSITIONS]) {
+      if (writer !== null) continue;
+
+      // `set status = 'x'` or `status = 'x'` inside an update — the only shapes that move a row
+      // into a state in this schema. Not `status in (...)`, which is the CHECK constraint.
+      const written = new RegExp(`set\\s+status\\s*=\\s*'${value}'`).test(sql);
+
+      expect(
+        written,
+        `Nothing was supposed to write status '${value}', but a migration now does. ` +
+          `The transition table in this file is stale, and its dead-end todo for '${value}' ` +
+          `may already be resolved — update both.`,
+      ).toBe(false);
+    }
   });
 });
 

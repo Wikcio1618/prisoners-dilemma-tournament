@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_FRAME_BYTES, MOVES, parse } from "@/durable/match-message";
+import { MAX_FRAME_LENGTH, parse } from "@/durable/match-message";
 
 /**
  * The parser is the only input-validation boundary on the WebSocket, and S-03 has to touch it
@@ -13,7 +13,9 @@ import { MAX_FRAME_BYTES, MOVES, parse } from "@/durable/match-message";
  */
 describe("parse", () => {
   describe("accepts", () => {
-    it.each(MOVES)("a well-formed commit frame for move %s", (move) => {
+    // Literal moves, not MOVES: `parse` validates with `MOVES.includes(...)`, so feeding it
+    // MOVES is an identity. These two strings are the wire vocabulary S-03 must not change.
+    it.each(["cooperate", "sabotage"])("a well-formed commit frame for move %s", (move) => {
       expect(parse(JSON.stringify({ type: "commit", move }))).toEqual({ type: "commit", move });
     });
 
@@ -79,11 +81,11 @@ describe("parse", () => {
       expect(parse(JSON.stringify(payload))).toBeNull();
     });
 
-    it("a frame larger than MAX_FRAME_BYTES, before attempting to parse it", () => {
+    it("a frame larger than MAX_FRAME_LENGTH, before attempting to parse it", () => {
       // Valid JSON, valid shape — rejected purely on length, which is what makes this a
       // work bound on an unauthenticated caller rather than a validation rule.
-      const padded = JSON.stringify({ type: "commit", move: "cooperate", pad: "x".repeat(MAX_FRAME_BYTES) });
-      expect(padded.length).toBeGreaterThan(MAX_FRAME_BYTES);
+      const padded = JSON.stringify({ type: "commit", move: "cooperate", pad: "x".repeat(MAX_FRAME_LENGTH) });
+      expect(padded.length).toBeGreaterThan(MAX_FRAME_LENGTH);
       expect(parse(padded)).toBeNull();
     });
 
@@ -92,9 +94,9 @@ describe("parse", () => {
       const padded = JSON.stringify({
         type: "commit",
         move: "cooperate",
-        pad: "x".repeat(MAX_FRAME_BYTES - base.length),
+        pad: "x".repeat(MAX_FRAME_LENGTH - base.length),
       });
-      expect(padded.length).toBe(MAX_FRAME_BYTES);
+      expect(padded.length).toBe(MAX_FRAME_LENGTH);
       expect(parse(padded)).toEqual({ type: "commit", move: "cooperate" });
     });
   });

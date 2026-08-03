@@ -27,6 +27,13 @@ import { describe, expect, it } from "vitest";
  *
  * ==================================================================================
  *
+ * A note on vocabulary. The shipped move type is
+ * `Move = "cooperate" | "sabotage"` (`src/durable/match-message.ts`), and that is what the
+ * module below should take. The fixtures here use `"C"` / `"S"` purely as shorthand so a
+ * five-round sequence stays readable on one line; the todo titles use the same shorthand for
+ * the same reason. When S-04 turns these on it maps `C -> "cooperate"` and `S -> "sabotage"` —
+ * the shorthand is a fixture-authoring convenience, never a second vocabulary to support.
+ *
  * Intended module surface (`src/lib/scoring.ts`, owned by S-04):
  *
  *   payoff(own: Move, opponent: Move): number

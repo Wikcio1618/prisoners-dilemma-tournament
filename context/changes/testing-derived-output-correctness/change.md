@@ -1,7 +1,7 @@
 ---
 change_id: testing-derived-output-correctness
 title: Runner bootstrap and derived-output correctness (test-plan Phase 1)
-status: implemented
+status: impl_reviewed
 created: 2026-08-01
 updated: 2026-08-03
 archived_at: null

@@ -45,12 +45,16 @@ export type ServerMessage =
   | { type: "error"; reason: string };
 
 /**
- * Largest frame the room will even attempt to parse.
+ * Largest frame the room will even attempt to parse, in UTF-16 code units.
  *
  * Bounds the work an unauthenticated caller can force before validation. A commit frame is well
  * under this; anything larger is not a message this room understands.
+ *
+ * Deliberately NOT a byte count — `raw.length` is code units, so a frame of multi-byte
+ * characters can reach roughly 3 KB. That is fine for a work bound, which is all this is, but
+ * the name has to say what it measures or a later reader will assume bytes and be wrong.
  */
-export const MAX_FRAME_BYTES = 1024;
+export const MAX_FRAME_LENGTH = 1024;
 
 /**
  * Parses a raw WebSocket frame into a commit message, or `null` if it is anything else.
@@ -59,7 +63,7 @@ export const MAX_FRAME_BYTES = 1024;
  * must not be able to abort the round for the other player.
  */
 export function parse(raw: string): ClientMessage | null {
-  if (raw.length > MAX_FRAME_BYTES) {
+  if (raw.length > MAX_FRAME_LENGTH) {
     return null;
   }
   try {

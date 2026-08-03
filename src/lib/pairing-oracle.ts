@@ -10,17 +10,30 @@
  * unit test. The only verification it has ever had is a hand-trace in
  * `context/changes/generate-round-robin-pairing/reviews/impl-review.md`.
  *
- * ---- What "independent" means here, precisely ----
+ * ---- How independent this actually is: not very, and here is why ----
  *
- * This is written from the circle method's geometric definition, not transcribed from the SQL's
- * modular-arithmetic expressions. That is enough to catch a transcription slip, an off-by-one,
- * or a rotation that drifts — the realistic failure modes.
+ * Be clear about this, because an earlier version of this comment overstated it. The plan wanted
+ * an implementation derived independently of the SQL, on the reasoning that a transcription
+ * agrees with the original by construction, bugs included. This file does not achieve that. Its
+ * arithmetic mirrors `20260801170219_pairing_set_based.sql` closely: the same `slots`/`rounds`
+ * derivation, the same two modulo expressions, the same negative-safe `+ rounds` idiom.
  *
- * It is NOT enough to catch a shared misunderstanding of the circle method itself, because both
- * implementations would then be wrong the same way. That is why the property tests in
- * `pairing-oracle.test.ts` matter more than the agreement: they check the schedule against what
- * a round robin *is* (every pair once, nobody twice per round), not against another
- * implementation. Agreement with the SQL is corroboration; the properties are the proof.
+ * That is not laziness — it is forced. The plan *also* required reproducing the SQL's exact
+ * round assignment so the two schedules can be compared row for row, and pinned it with the n=4
+ * hand-trace. A different formulation of the circle method (rotate an array, pair `i` with
+ * `len-1-i`) produces an equally valid round robin with *different round numbers*: its first
+ * round is 1-4, 2-3 where this one's is 1-2, 3-4. Independent derivation and identical round
+ * assignment are not simultaneously achievable, and comparability was chosen.
+ *
+ * So the honest claim is narrow: this catches a transcription slip, an off-by-one, or a
+ * rotation that drifts. It does NOT catch a shared misunderstanding of the circle method,
+ * because both implementations would be wrong the same way.
+ *
+ * What carries the verification instead is `pairing-oracle.test.ts`, which checks the schedule
+ * against what a round robin *is* — every pair exactly once, nobody twice in a round, everyone
+ * playing n-1 matches — exhaustively for every roster size from 2 to 50. Those properties do not
+ * reference the SQL at all, so they would fail on a shared misunderstanding even though this
+ * module would not. Agreement with the SQL is corroboration; the properties are the proof.
  *
  * ---- Conventions, copied deliberately so the two schedules are comparable ----
  *

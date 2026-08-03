@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
@@ -44,6 +44,35 @@ function migration(name: string): string {
   }
 }
 
+/** Every migration filename, ascending — which is chronological, since they are timestamped. */
+function allMigrations(): string[] {
+  return readdirSync(MIGRATIONS)
+    .filter((name) => name.endsWith(".sql"))
+    .sort();
+}
+
+/**
+ * Asserts that `file` is the LAST migration defining whatever `defines` matches.
+ *
+ * Without this, every pin below is a comment with extra steps. Add
+ * `2026xxxx_join_tournament_v2.sql` raising the cap to 100, and the player-cap test would still
+ * read the 2026-07-29 file, still find 50, still pass — while the live function and the
+ * TypeScript constant disagree. That is `tournament-data-model` F3 recurring inside the very
+ * file written to stop it, which is why this guard exists rather than a note asking people to
+ * remember.
+ */
+function assertNewestDefinition(file: string, defines: RegExp, what: string): void {
+  const defining = allMigrations().filter((name) => defines.test(migration(name)));
+
+  expect(defining, `no migration defines ${what} — the pattern ${defines.source} matches nothing`).not.toHaveLength(0);
+  expect(
+    defining.at(-1),
+    `${what} is redefined by a later migration than the one this test reads. ` +
+      `Pinned: ${file}. Newest: ${defining.at(-1)}. Update the pin deliberately — ` +
+      `a drift test reading a superseded file passes while the constants disagree.`,
+  ).toBe(file);
+}
+
 /** Extracts one capture group, failing with the file name rather than "null is not an object". */
 function extract(file: string, pattern: RegExp, what: string): string {
   const source = migration(file);
@@ -56,6 +85,10 @@ function extract(file: string, pattern: RegExp, what: string): string {
 
 describe("player cap", () => {
   const FILE = "20260729192744_join_tournament_membership_shortcircuit.sql";
+
+  it("reads the live join_tournament definition", () => {
+    assertNewestDefinition(FILE, /create or replace function public\.join_tournament/, "join_tournament()");
+  });
 
   it(`matches MAX_PLAYERS_PER_TOURNAMENT (${MAX_PLAYERS_PER_TOURNAMENT})`, () => {
     const sqlValue = Number(extract(FILE, /v_player_count\s*>=\s*(\d+)/, "the player-cap comparison"));
@@ -71,6 +104,11 @@ describe("player cap", () => {
 describe("display-name bound", () => {
   const CHECK_FILE = "20260731181103_player_profiles.sql";
   const CLAMP_FILE = "20260801170309_profile_trigger_hardening.sql";
+
+  it("reads the live profiles table and trigger definitions", () => {
+    assertNewestDefinition(CHECK_FILE, /constraint profiles_display_name_length/, "profiles_display_name_length");
+    assertNewestDefinition(CLAMP_FILE, /create or replace function public\.handle_new_user/, "handle_new_user()");
+  });
 
   it(`the CHECK constraint matches MAX_DISPLAY_NAME_LENGTH (${MAX_DISPLAY_NAME_LENGTH})`, () => {
     const sqlValue = Number(
@@ -107,6 +145,10 @@ describe("display-name bound", () => {
 describe("join-code format", () => {
   const FILE = "20260730203114_join_code_six_digits.sql";
 
+  it("reads the live join-code constraint", () => {
+    assertNewestDefinition(FILE, /add constraint tournaments_join_code_format/, "tournaments_join_code_format");
+  });
+
   it("matches JOIN_CODE_PATTERN", () => {
     const sqlPattern = extract(FILE, /check\s*\(join_code\s*~\s*'([^']+)'\)/, "the join-code CHECK");
 
@@ -121,6 +163,11 @@ describe("join-code format", () => {
 describe("status vocabularies", () => {
   const MATCH_FILE = "20260731174617_pairing_schema.sql";
   const TOURNAMENT_FILE = "20260729164628_tournament_tables.sql";
+
+  it("reads the live status definitions", () => {
+    assertNewestDefinition(MATCH_FILE, /add constraint matches_status_check/, "matches_status_check");
+    assertNewestDefinition(TOURNAMENT_FILE, /create type public\.tournament_status/, "the tournament_status enum");
+  });
 
   it("matches_status_check lists exactly MATCH_STATUSES", () => {
     const list = extract(MATCH_FILE, /check\s*\(status\s+in\s*\(([^)]+)\)\)/, "the match status CHECK");
@@ -157,6 +204,7 @@ describe("error tokens", () => {
 
   it("join_tournament raises exactly the JOIN_TOURNAMENT_ERRORS tokens", () => {
     const FILE = "20260729192744_join_tournament_membership_shortcircuit.sql";
+    assertNewestDefinition(FILE, /create or replace function public\.join_tournament/, "join_tournament()");
     const sqlTokens = detailTokens(FILE);
     const tsTokens = new Set<string>(Object.values(JOIN_TOURNAMENT_ERRORS));
 
@@ -172,6 +220,7 @@ describe("error tokens", () => {
     // The live definition is the most recent migration replacing the function — the set-based
     // rewrite, not the original pairing schema.
     const FILE = "20260801170219_pairing_set_based.sql";
+    assertNewestDefinition(FILE, /create or replace function public\.start_tournament/, "start_tournament()");
     const sqlTokens = detailTokens(FILE);
     const tsTokens = new Set<string>(Object.values(START_TOURNAMENT_ERRORS));
 

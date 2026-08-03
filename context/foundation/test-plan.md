@@ -97,8 +97,8 @@ which lines need re-verification.
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| unit + property-based | Vitest | ^4.1.0 | none yet — see §3 Phase 1. Shares the project's existing Vite pipeline; Astro's own recommendation |
-| property-based generation | fast-check | latest | none yet — see §3 Phase 1. For score invariants (zero-balance, order independence) that example-based tests state poorly |
+| unit + property-based | Vitest | 4.1.10 | **Wired.** Standalone `vitest.config.ts`, not Astro's `getViteConfig`. Reference test: `src/lib/schemas.test.ts`. checked: 2026-08-03 |
+| property-based generation | fast-check | 4.9 | **Wired.** For claims quantifying over a range, or non-deterministic functions where one sample proves nothing. Reference test: `src/lib/pairing-oracle.test.ts`. checked: 2026-08-03 |
 | Workers-runtime integration | `@cloudflare/vitest-pool-workers` | ^0.16.20 | none yet — see §3 Phase 3. Runs tests inside workerd via Miniflare, fully local; `cloudflare:test` exports `runInDurableObject`, `runDurableObjectAlarm`, and `evictDurableObject(stub, { webSockets: "close" })` for eviction/reconnect. checked: 2026-08-01 |
 | database integration | Supabase CLI local stack | 2.110.0 | none yet — see §3 Phase 2. **Requires Docker, which is not currently installed** — Phase 2 must resolve this or choose a disposable remote branch instead |
 | e2e | none | — | Deliberately absent — see §7 |

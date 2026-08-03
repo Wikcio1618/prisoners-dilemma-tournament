@@ -5,7 +5,7 @@ import { parse, SEATS, type Move, type Seat, type ServerMessage } from "./match-
 // The wire vocabulary and the frame parser live in `./match-message` so they can be unit
 // tested — this module imports `cloudflare:workers`, which only resolves inside workerd.
 // Re-exported here so existing importers of match-room keep working unchanged.
-export { parse, MOVES, SEATS, MAX_FRAME_BYTES } from "./match-message";
+export { parse, MOVES, SEATS, MAX_FRAME_LENGTH } from "./match-message";
 export type { ClientMessage, Move, Seat, ServerMessage } from "./match-message";
 
 /**

@@ -134,7 +134,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-04: Players see final statistics and scoreboard when the tournament concludes
 
-- **Outcome:** user can view the concluded tournament's final scoreboard, their own zero-balanced score, and behavioral statistics (e.g., forgiveness, initial aggression) once all matches are complete.
+- **Outcome:** user can view the concluded tournament's final scoreboard — their own score with matches played alongside it, and behavioral statistics (initial aggression, forgiveness) — once all matches are complete. All four are defined operationally in `prd.md` → Business Logic → *Scoring specification*; the earlier "zero-balanced score" wording was withdrawn there on 2026-08-01 (see Inherited decisions below).
 - **Change ID:** tournament-results-and-stats
 - **PRD refs:** FR-008, Success Criteria (Secondary — "players can see their own match history/results after the tournament concludes")
 - **Prerequisites:** S-03
