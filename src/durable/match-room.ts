@@ -1,16 +1,12 @@
 import { DurableObject } from "cloudflare:workers";
 
-/** The two moves a player can commit. Mirrors the PRD's Współpraca / Sabotaż. */
-export type Move = "cooperate" | "sabotage";
+import { parse, SEATS, type Move, type Seat, type ServerMessage } from "./match-message";
 
-/** Which side of the match a socket is playing. */
-export type Seat = "a" | "b";
-
-/** Client -> server. The player's identity comes from the session, never from the message. */
-export interface ClientMessage {
-  type: "commit";
-  move: Move;
-}
+// The wire vocabulary and the frame parser live in `./match-message` so they can be unit
+// tested — this module imports `cloudflare:workers`, which only resolves inside workerd.
+// Re-exported here so existing importers of match-room keep working unchanged.
+export { parse, MOVES, SEATS, MAX_FRAME_BYTES } from "./match-message";
+export type { ClientMessage, Move, Seat, ServerMessage } from "./match-message";
 
 /**
  * Header carrying the authenticated Supabase user id from the entrypoint into the room.
@@ -20,16 +16,6 @@ export interface ClientMessage {
  * through that entrypoint, which resolves identity before obtaining the stub.
  */
 export const PLAYER_ID_HEADER = "X-Player-Id";
-
-/** Server -> client. */
-export type ServerMessage =
-  | { type: "seat"; seat: Seat }
-  | { type: "state"; committed: Record<Seat, boolean> }
-  | { type: "reveal"; moves: Record<Seat, Move> }
-  | { type: "error"; reason: string };
-
-const SEATS: readonly Seat[] = ["a", "b"];
-const MOVES: readonly Move[] = ["cooperate", "sabotage"];
 
 /** Storage key holding a seat's committed move. */
 const moveKey = (seat: Seat) => `move:${seat}`;
@@ -155,7 +141,7 @@ export class MatchRoom extends DurableObject<Env> {
       return;
     }
 
-    const message = this.parse(raw);
+    const message = parse(raw);
     if (!message) {
       this.send(ws, { type: "error", reason: "Unrecognised message" });
       return;
@@ -264,33 +250,6 @@ export class MatchRoom extends DurableObject<Env> {
 
   private committedFlags(moves: Partial<Record<Seat, Move>>): Record<Seat, boolean> {
     return { a: moves.a !== undefined, b: moves.b !== undefined };
-  }
-
-  private parse(raw: string): ClientMessage | null {
-    // Bound the work an unauthenticated caller can force before parsing. A commit frame is
-    // well under this; anything larger is not a message this room understands.
-    if (raw.length > 1024) {
-      return null;
-    }
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        (parsed as { type?: unknown }).type === "commit" &&
-        MOVES.includes((parsed as { move?: unknown }).move as Move)
-      ) {
-        const { move, playerId } = parsed as { move: Move; playerId?: unknown };
-        return {
-          type: "commit",
-          move,
-          ...(typeof playerId === "string" ? { playerId } : {}),
-        };
-      }
-    } catch {
-      return null;
-    }
-    return null;
   }
 
   /** A socket in teardown throws on send; one dead peer must not abort the round. */

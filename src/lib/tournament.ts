@@ -37,6 +37,41 @@ export const DEFAULT_ROUNDS_PER_MATCH = 10;
 export const MAX_DISPLAY_NAME_LENGTH = 40;
 
 /**
+ * Every legal value of `matches.status`.
+ *
+ * The column is plain `text` guarded by a CHECK, not an enum — the enum was dropped in
+ * `supabase/migrations/20260729193532_match_status_text_check.sql` so S-02 could redefine the
+ * vocabulary cheaply. The consequence is that `src/db/database.types.ts` types the column as
+ * bare `string`, so a typo compiles clean and fails at insert time. This tuple is the only
+ * TypeScript-side record of the four legal values.
+ *
+ * Mirrored by `matches_status_check`
+ * (`supabase/migrations/20260731174617_pairing_schema.sql`), and pinned by the drift test in
+ * `src/lib/db-constants.test.ts`.
+ *
+ * Only `pending` currently has a writer — see the D2 dead end in
+ * `context/changes/testing-derived-output-correctness/research.md`, owned by S-03.
+ */
+export const MATCH_STATUSES = ["pending", "in_progress", "finished", "abandoned"] as const;
+
+export type MatchStatus = (typeof MATCH_STATUSES)[number];
+
+/**
+ * Every legal value of `tournaments.status`.
+ *
+ * Unlike `matches.status` this one *is* a Postgres enum (`public.tournament_status`, created in
+ * `supabase/migrations/20260729164628_tournament_tables.sql`), so the database rejects an
+ * unknown value outright. The tuple exists so application code can stop writing the literals
+ * inline, and so the drift test can prove the two vocabularies still agree.
+ *
+ * `finished` has no writer and `started` has no exit — see the D1 dead end in the same
+ * research file, owned by S-04.
+ */
+export const TOURNAMENT_STATUSES = ["lobby", "started", "finished"] as const;
+
+export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
+
+/**
  * Exact format of a tournament's join code: six digits.
  *
  * Unlike the round bounds above, this one *is* enforced in the database — the join code is
