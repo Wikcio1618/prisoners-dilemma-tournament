@@ -786,14 +786,14 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [x] 5.1 Suite passes with the new todo cases: `npm run test`
-- [x] 5.2 Linting passes: `npm run lint`
-- [x] 5.3 Every status-vocabulary member appears in the transition table fixture
+- [x] 5.1 Suite passes with the new todo cases: `npm run test` — 7ccdab7
+- [x] 5.2 Linting passes: `npm run lint` — 7ccdab7
+- [x] 5.3 Every status-vocabulary member appears in the transition table fixture — 7ccdab7
 
 #### Manual
 
-- [x] 5.4 Each dead-end todo names a state, an owning slice, and a research reference
-- [x] 5.5 `lessons.md` reads as an applicable rule, not a description of past bugs
+- [x] 5.4 Each dead-end todo names a state, an owning slice, and a research reference — 7ccdab7
+- [x] 5.5 `lessons.md` reads as an applicable rule, not a description of past bugs — 7ccdab7
 
 ### Phase 6: Cookbook and Test-Plan Reconciliation
 
