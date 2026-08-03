@@ -745,15 +745,15 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [x] 2.1 All tests pass: `npm run test`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build succeeds after the `match-room.ts` extraction: `npm run build`
-- [x] 2.4 Drift tests fail loudly when a constant is edited, then revert
+- [x] 2.1 All tests pass: `npm run test` — efe6091
+- [x] 2.2 Linting passes: `npm run lint` — efe6091
+- [x] 2.3 Build succeeds after the `match-room.ts` extraction: `npm run build` — efe6091
+- [x] 2.4 Drift tests fail loudly when a constant is edited, then revert — efe6091
 
 #### Manual
 
-- [x] 2.5 Dev match-room harness still completes a round after the parser extraction
-- [x] 2.6 A malformed WebSocket frame is still rejected as before
+- [x] 2.5 Dev match-room harness still completes a round after the parser extraction — efe6091
+- [x] 2.6 A malformed WebSocket frame is still rejected as before — efe6091
 
 ### Phase 3: Scoring Specification and Oracle Tests
 
