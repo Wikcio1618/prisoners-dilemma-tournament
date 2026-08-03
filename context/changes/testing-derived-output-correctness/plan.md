@@ -773,14 +773,14 @@ constants. Both are covered by lint, typecheck and build, plus the manual dev-ha
 
 #### Automated
 
-- [ ] 4.1 All properties hold across the full range: `npm run test`
-- [ ] 4.2 Property tests exercise n=2 through n=50 without a counterexample
-- [ ] 4.3 Linting and build pass: `npm run lint`, `npm run build`
+- [x] 4.1 All properties hold across the full range: `npm run test`
+- [x] 4.2 Property tests exercise n=2 through n=50 without a counterexample
+- [x] 4.3 Linting and build pass: `npm run lint`, `npm run build`
 
 #### Manual
 
-- [ ] 4.4 The n=4 schedule matches the hand-trace in the prior review
-- [ ] 4.5 The oracle module is confirmed unreferenced by any shipped code path
+- [x] 4.4 The n=4 schedule matches the hand-trace in the prior review
+- [x] 4.5 The oracle module is confirmed unreferenced by any shipped code path
 
 ### Phase 5: State-Machine Invariants and the Dead-End Record
 
